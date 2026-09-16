@@ -1,8 +1,18 @@
 # Jellyfin Philips Hue Plugin
 
-[![Build](https://github.com/florentsorel/jellyfin-hue/actions/workflows/build.yaml/badge.svg)](https://github.com/florentsorel/jellyfin-hue/actions/workflows/build.yaml)
-[![Tests](https://github.com/florentsorel/jellyfin-hue/actions/workflows/test.yaml/badge.svg)](https://github.com/florentsorel/jellyfin-hue/actions/workflows/test.yaml)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/florentsorel/jellyfin-hue/actions/workflows/test.yaml">
+    <img src="https://github.com/florentsorel/jellyfin-hue/actions/workflows/test.yaml/badge.svg" alt="Test Status" />
+  </a>
+  <a href="https://github.com/florentsorel/jellyfin-hue/releases">
+    <img src="https://img.shields.io/github/v/release/florentsorel/jellyfin-hue?color=blue&label=release" alt="Latest Release" />
+  </a>
+  <img src="https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/build.yaml&query=$.targetAbi&label=Jellyfin&color=purple&prefix=%3E%3D%20" alt="Jellyfin Version" />
+  <img src="https://img.shields.io/badge/dynamic/yaml?url=https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/build.yaml&query=$.framework&label=.NET&color=512bd4" alt=".NET Version" />
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-GPL--3.0-green.svg" alt="License: GPL-3.0" />
+  </a>
+</p>
 
 A native **Philips Hue** integration plugin for **Jellyfin 12+** that automatically synchronizes your room lighting with media playback states (smooth cinema dimming, warm pause illumination, and state restoration on stop).
 
