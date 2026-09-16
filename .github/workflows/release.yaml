@@ -139,6 +139,9 @@ jobs:
               for (let line of lines) {
                 line = line.trim();
                 if (line.startsWith("* ")) {
+                  if (/renovate|dependabot|first contribution/i.test(line)) {
+                    continue;
+                  }
                   // Strip GitHub PR suffix: " by @user in https://..." or " in https://..."
                   line = line.replace(/\s+(by\s+@[^\s]+)?\s+in\s+https:\/\/\S+/g, "");
                   changes.push("- " + line.substring(2).trim());
