@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Philips Hue</title>
+</head>
+<body>
+    <div id="HueConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+        <style>
+            .hue-card {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 1.25em;
+                margin-bottom: 1.25em;
+            }
+            .hue-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.75em;
+            }
+            .hue-card-title {
+                font-size: 1.2em;
+                font-weight: 600;
+                margin: 0;
+            }
+            .hue-badge {
+                display: inline-block;
+                padding: 0.25em 0.6em;
+                border-radius: 4px;
+                font-size: 0.85em;
+                font-weight: 500;
+            }
+            .hue-badge-success {
+                background: #1b5e20;
+                color: #e8f5e9;
+                border: 1px solid #2e7d32;
+            }
+            .hue-badge-warning {
+                background: #e65100;
+                color: #fff3e0;
+            }
+            .hue-bridge-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1em;
+                margin: 1em 0;
+            }
+            .hue-bridge-item {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 8px;
+                padding: 1em;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+            .hue-bridge-item:hover {
+                background: rgba(0, 164, 228, 0.1);
+                border-color: #00a4dc;
+            }
+            .hue-bridge-item.selected {
+                background: rgba(0, 164, 228, 0.2);
+                border-color: #00a4dc;
+                box-shadow: 0 0 10px rgba(0, 164, 228, 0.3);
+            }
+            .hue-bridge-name {
+                font-weight: 600;
+                font-size: 1.05em;
+                margin-bottom: 0.3em;
+                display: flex;
+                align-items: center;
+                gap: 0.5em;
+            }
+            .hue-bridge-meta {
+                font-size: 0.85em;
+                color: #aaa;
+            }
+            .hue-pair-step-box {
+                background: rgba(0, 164, 228, 0.08);
+                border-left: 4px solid #00a4dc;
+                border-radius: 0 8px 8px 0;
+                padding: 1.25em;
+                margin-top: 1.25em;
+            }
+            .hue-bridge-illustration {
+                width: 64px;
+                height: 64px;
+                min-width: 64px;
+                display: inline-block;
+                position: relative;
+            }
+            .hue-bridge-button-ring {
+                animation: hue-pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+                transform-origin: 12px 12px;
+            }
+            .hue-bridge-button-glow {
+                animation: hue-pulse-glow 2s infinite ease-in-out;
+                transform-origin: 12px 12px;
+            }
+            @keyframes hue-pulse-ring {
+                0% { transform: scale(0.95); opacity: 0.6; stroke-width: 2; }
+                50% { transform: scale(1.15); opacity: 1; stroke-width: 3; }
+                100% { transform: scale(0.95); opacity: 0.6; stroke-width: 2; }
+            }
+            @keyframes hue-pulse-glow {
+                0% { fill-opacity: 0.3; }
+                50% { fill-opacity: 0.8; }
+                100% { fill-opacity: 0.3; }
+            }
+            .hue-spinner {
+                width: 18px;
+                height: 18px;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                border-top-color: #00a4dc;
+                border-radius: 50%;
+                animation: hue-spin 1s linear infinite;
+                display: inline-block;
+                vertical-align: middle;
+            }
+            .hue-pair-progress-bar {
+                width: 100%;
+                height: 6px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 3px;
+                overflow: hidden;
+                margin-top: 0.8em;
+            }
+            .hue-pair-progress-fill {
+                height: 100%;
+                background: #00a4dc;
+                width: 100%;
+                transition: width 1s linear;
+            }
+            @keyframes hue-spin {
+                to { transform: rotate(360deg); }
+            }
+            .hue-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5em;
+                margin: 0.75em 0;
+                font-size: 0.9em;
+                color: #aaa;
+            }
+            .hue-actions {
+                display: flex;
+                gap: 0.5em;
+                margin-top: 1em;
+            }
+            .hue-editor-box {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 10px;
+                padding: 1.75em;
+                margin-top: 1.5em;
+                color: #fff;
+            }
+            .hue-section-title {
+                font-size: 1.1em;
+                font-weight: 600;
+                margin: 1.5em 0 0.5em 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding-bottom: 0.25em;
+            }
+            .hue-flex-row {
+                display: flex;
+                gap: 1em;
+                align-items: center;
+            }
+            .hue-flex-row > * {
+                flex: 1;
+            }
+            .hue-targets-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+                gap: 0.6em;
+                margin-top: 0.5em;
+            }
+            .hue-user-checkbox-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1em 2em;
+                margin-top: 0.6em;
+            }
+            .hue-card-cb {
+                display: none !important;
+            }
+            .hue-target-check {
+                display: none;
+                margin-left: auto;
+                color: #00a4dc;
+                flex-shrink: 0;
+            }
+            .hue-target-card.selected .hue-target-check,
+            .hue-target-card:has(input:checked) .hue-target-check {
+                display: inline-flex;
+                align-items: center;
+            }
+            .hue-target-card {
+                display: flex;
+                align-items: center;
+                gap: 0.7em;
+                padding: 0.65em 0.85em;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background 0.15s, border-color 0.15s;
+                user-select: none;
+            }
+            .hue-target-card:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.25);
+            }
+            .hue-target-card.selected,
+            .hue-target-card:has(input:checked) {
+                background: rgba(0, 164, 220, 0.12);
+                border-color: #00a4dc;
+            }
+            .hue-target-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.08);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                color: #e0e0e0;
+            }
+            .hue-target-card.selected .hue-target-icon,
+            .hue-target-card:has(input:checked) .hue-target-icon {
+                background: rgba(0, 164, 220, 0.25);
+                color: #00a4dc;
+            }
+            .hue-target-info {
+                min-width: 0;
+                flex: 1;
+            }
+            .hue-target-name {
+                font-weight: 500;
+                font-size: 0.95em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .hue-target-meta {
+                font-size: 0.75em;
+                color: #888;
+                margin-top: 0.15em;
+                display: flex;
+                align-items: center;
+                gap: 0.4em;
+            }
+            .hue-action-row {
+                display: flex;
+                gap: 2.5em;
+                align-items: flex-end;
+                flex-wrap: wrap;
+                margin-top: 0.5em;
+            }
+            .hue-slider-container {
+                flex: 1;
+                min-width: 220px;
+                max-width: 440px;
+                margin: 0 !important;
+            }
+            .hue-duration-container {
+                width: 130px;
+                flex: none;
+                margin: 0 !important;
+            }
+            .hue-duration-container input {
+                width: 100% !important;
+                text-align: center;
+            }
+            .hue-btn-delete {
+                background: #c62828 !important;
+                color: #ffffff !important;
+            }
+            .hue-btn-delete:hover {
+                background: #b71c1c !important;
+            }
+            .hue-slider-row {
+                display: flex;
+                align-items: center;
+                gap: 1em;
+                margin-top: 0.4em;
+            }
+            .hue-range {
+                flex: 1;
+                height: 6px;
+                border-radius: 3px;
+                background: rgba(255, 255, 255, 0.2);
+                accent-color: #00a4dc;
+                outline: none;
+                cursor: pointer;
+            }
+            .hue-slider-badge {
+                min-width: 90px;
+                font-size: 0.95em;
+                font-weight: 600;
+                color: #00a4dc;
+                text-align: left;
+                font-variant-numeric: tabular-nums;
+            }
+            .hue-color-picker-wrap {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 0.8em;
+                margin-top: 0.5em;
+            }
+            .hue-color-preview-box {
+                position: relative;
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                border: 2px solid rgba(255, 255, 255, 0.25);
+                overflow: hidden;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            .hue-native-color-picker {
+                position: absolute;
+                top: -8px;
+                left: -8px;
+                width: 52px;
+                height: 52px;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                background: transparent;
+            }
+            .hue-color-swatches {
+                display: flex;
+                align-items: center;
+                gap: 0.4em;
+                flex-wrap: wrap;
+            }
+            .hue-swatch-btn {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                padding: 0;
+                cursor: pointer;
+                transition: transform 0.15s, border-color 0.15s;
+            }
+            .hue-swatch-btn:hover {
+                transform: scale(1.2);
+                border-color: #ffffff;
+            }
+            .hue-color-warning {
+                margin-top: 0.5em;
+                padding: 0.6em 0.9em;
+                border-radius: 6px;
+                background: rgba(255, 152, 0, 0.1);
+                border: 1px solid rgba(255, 152, 0, 0.3);
+                color: #ffb74d;
+                font-size: 0.85em;
+            }
+        </style>
+
+        <div class="content-primary">
+            <div class="verticalSection">
+                <div class="sectionTitleContainer">
+                    <h2 class="sectionTitle" data-i18n="configTitle">Philips Hue Lighting Configuration</h2>
+                </div>
+
+                <!-- Bridge Configuration Wizard Card -->
+                <div class="hue-card">
+                    <div class="hue-card-header">
+                        <h3 class="hue-card-title" data-i18n="bridgeSectionTitle">Hue Bridge Connection</h3>
+                        <span id="bridgeStatusBadge" class="hue-badge hue-badge-warning">Not Paired</span>
+                    </div>
+
+                    <!-- State 1: Disconnected / Pairing Wizard -->
+                    <div id="bridgeSetupSection">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <label class="inputLabel" style="margin:0; font-size:1.05em; font-weight:600;" data-i18n="step1Title">1. Select your Philips Hue Bridge</label>
+                                <button is="emby-button" type="button" class="raised" id="btnRefreshBridges">
+                                    <span data-i18n="btnScanBridges">🔍 Scan for Bridges</span>
+                                </button>
+                            </div>
+                            <p class="fieldDescription" style="margin-top:0.25em;" data-i18n="step1Desc">
+                                Choose your Philips Hue Bridge discovered on the network, or enter its IP address manually.
+                            </p>
+
+                            <div id="bridgesScanningText" style="display:none; margin: 1em 0; color: #00a4dc;">
+                                <span class="hue-spinner"></span> <span data-i18n="scanningText">Scanning your network for Philips Hue Bridges...</span>
+                            </div>
+
+                            <div id="discoveredBridgesList" class="hue-bridge-list"></div>
+
+                            <div id="manualIpToggleContainer" style="margin-top: 0.5em;">
+                                <a href="#" id="lnkToggleManualIp" style="color: #00a4dc; text-decoration: underline; font-size: 0.9em;" data-i18n="lnkManualIp">
+                                    Enter Bridge IP manually (Advanced)
+                                </a>
+                            </div>
+
+                            <div id="manualIpContainer" style="display:none; margin-top: 0.75em;" class="inputContainer">
+                                <label class="inputLabel" for="txtBridgeIp" data-i18n="lblManualIp">Manual Bridge IP Address</label>
+                                <input is="emby-input" type="text" id="txtBridgeIp" placeholder="e.g. 192.168.1.53" />
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Push Link Button (Auto-detection) -->
+                        <div id="pairStepContainer" class="hue-pair-step-box" style="display:none;">
+                            <div style="display:flex; gap: 1.25em; align-items:center;">
+                                <div class="hue-bridge-illustration">
+                                    <svg viewBox="0 0 24 24" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+                                        <!-- Bridge v2 Body & LEDs (from hass-hue-icons) -->
+                                        <path fill="#00a4dc" d="M17.7,4.4c-0.53,0-0.95-0.42-0.95-0.95S17.18,2.5,17.7,2.5s0.95,0.42,0.95,0.95S18.23,4.4,17.7,4.4z M5.35,3.45c0-0.53,0.42-0.95,0.95-0.95s0.95,0.42,0.95,0.95S6.82,4.4,6.3,4.4 S5.35,3.97,5.35,3.45 M12,2.5c0.53,0,0.95,0.42,0.95,0.95S12.53,4.4,12,4.4s-0.95-0.42-0.95-0.95S11.47,2.5,12,2.5 M19.6,0.59H4.4 c-2.09,0-3.8,1.71-3.8,3.8V19.6c0,2.09,1.71,3.8,3.8,3.8h15.2c2.09,0,3.8-1.71,3.8-3.8V4.4C23.41,2.31,21.69,0.59,19.6,0.59 M12,17.7c-3.15,0-5.7-2.56-5.7-5.7S8.85,6.3,12,6.3 s5.7,2.56,5.7,5.7S15.15,17.7,12,17.7"/>
+                                        <!-- Center Link Button (Pulsing ring & button) -->
+                                        <circle class="hue-bridge-button-ring" cx="12" cy="12" r="5.7" fill="none" stroke="#ffffff" />
+                                        <circle class="hue-bridge-button-glow" cx="12" cy="12" r="3.8" fill="#ffffff" />
+                                    </svg>
+                                </div>
+                                <div style="flex:1;">
+                                    <h4 style="margin:0 0 0.4em 0; font-size:1.1em; color:#fff;" data-i18n="step2Title">2. Press the physical button on your Bridge</h4>
+                                    <p style="margin:0; font-size:0.95em; line-height:1.4; color:#ddd;" data-i18n-html="step2Desc">
+                                        Press the large round button located on top of your Philips Hue Bridge.
+                                    </p>
+                                    <div class="hue-pair-progress-bar">
+                                        <div id="pairProgressFill" class="hue-pair-progress-fill"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-top: 1em; flex-wrap:wrap; gap:1em;">
+                                <div id="pairStatusText" style="font-size:0.95em; font-weight:500; color:#00a4dc;">
+                                    <span class="hue-spinner"></span> <span id="pairCountdownText">Waiting for button press... (30s)</span>
+                                </div>
+                                <button is="emby-button" type="button" class="raised" id="btnRetryPair" style="display:none;">
+                                    <span data-i18n="btnRetryPair">🔄 Retry pairing</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- State 2: Bridge Already Connected & Paired -->
+                    <div id="bridgeConnectedSection" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(27,94,32,0.15); border:1px solid #2e7d32; border-radius:8px; padding:1em;">
+                            <div>
+                                <div style="font-size:1.1em; font-weight:600; color:#e8f5e9;">
+                                    ✓ <span data-i18n="connectedToBridge">Connected to Hue Bridge</span> (<span id="connectedBridgeIpText"></span>)
+                                </div>
+                                <div style="font-size:0.85em; color:#aaa; margin-top:0.2em;">
+                                    AppKey: <code id="connectedBridgeAppKeyText" style="color:#81c784;"></code>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:0.5em;">
+                                <button is="emby-button" type="button" class="raised" id="btnRefreshResources">
+                                    <span data-i18n="btnRefreshResources">🔄 Refresh Lights & Groups</span>
+                                </button>
+                                <button is="emby-button" type="button" class="raised" id="btnDisconnectBridge" style="background:#b71c1c;">
+                                    <span data-i18n="btnUnpair">Unpair</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profiles Main View (Hidden when editing a profile) -->
+                <div id="profilesMainView">
+                    <div class="sectionTitleContainer" style="display:flex; justify-content:space-between; align-items:center; margin-top: 2.5em;">
+                        <h2 class="sectionTitle" data-i18n="profilesTitle">Lighting Profiles</h2>
+                        <button is="emby-button" type="button" class="raised button-submit" id="btnAddProfile">
+                            <span data-i18n="btnAddProfile">+ Add Profile</span>
+                        </button>
+                    </div>
+
+                    <div id="profilesList"></div>
+                </div>
+
+                <!-- In-page Profile Editor (Replaces modal, shown when creating or editing a profile) -->
+                <div id="profileEditor" class="hue-editor-box" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1em;">
+                        <h3 id="editorTitle" style="margin:0; font-size:1.3em;">Configure Profile</h3>
+                        <button is="emby-button" type="button" class="raised" id="btnTopCancelProfile" style="font-size:0.9em;" data-i18n="btnCancel">Cancel</button>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="txtProfileName" data-i18n="lblProfileName">Profile Name</label>
+                        <input is="emby-input" type="text" id="txtProfileName" required />
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-anonymous">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkProfileEnabled" />
+                            <span data-i18n="lblProfileEnabled">Profile Enabled</span>
+                        </label>
+                    </div>
+
+                    <!-- Triggers -->
+                    <div class="hue-section-title" data-i18n="sectionTriggers">🎯 Triggers & Filters</div>
+
+                    <div>
+                        <label class="inputLabel" data-i18n="lblTargetUsers">Target Users</label>
+                        <div class="fieldDescription" data-i18n="descTargetUsers">Check the Jellyfin users that trigger this profile (none checked = all users):</div>
+                        <div id="jellyfinUsersCheckboxes" class="hue-targets-grid"></div>
+                    </div>
+
+                    <div style="margin-top:1.25em;">
+                        <label class="inputLabel" data-i18n="lblTargetDevices">Target Devices / Clients</label>
+                        <div class="fieldDescription" data-i18n="descTargetDevices">Check the Jellyfin devices that trigger this profile (none checked = all devices):</div>
+                        <div id="jellyfinDevicesCheckboxes" class="hue-targets-grid"></div>
+                    </div>
+
+                    <div style="display:flex; gap:2.5em; align-items:center; margin-top:1em; flex-wrap:wrap;">
+                        <div class="checkboxContainer" style="margin:0;">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="chkTriggerMovies" />
+                                <span data-i18n="lblTriggerMovies">Trigger on Movies</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer" style="margin:0;">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="chkTriggerEpisodes" />
+                                <span data-i18n="lblTriggerEpisodes">Trigger on TV Episodes</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:1.25em;">
+                        <div class="checkboxContainer" style="margin:0;">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="chkEnableTimeFilter" />
+                                <span data-i18n="lblEnableTimeFilter">Restrict to active time range</span>
+                            </label>
+                        </div>
+                        <div id="timeFilterSettingsContainer" style="margin-top:0.75em; display:none;">
+                            <div style="display:flex; gap:1.5em; align-items:center; flex-wrap:wrap;">
+                                <div class="inputContainer" style="margin:0;">
+                                    <label class="inputLabel" for="selTimeFilterStart" data-i18n="lblTimeFilterStart">From (start time)</label>
+                                    <select is="emby-select" id="selTimeFilterStart" class="emby-select-withcolor emby-select" style="min-width:110px;"></select>
+                                </div>
+                                <div class="inputContainer" style="margin:0;">
+                                    <label class="inputLabel" for="selTimeFilterEnd" data-i18n="lblTimeFilterEnd">To (end time)</label>
+                                    <select is="emby-select" id="selTimeFilterEnd" class="emby-select-withcolor emby-select" style="min-width:110px;"></select>
+                                </div>
+                            </div>
+                            <div class="fieldDescription" id="timeFilterDesc" style="margin-top:0.5em; color:#aaa;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Targets -->
+                    <div class="hue-section-title" data-i18n="sectionTargets">💡 Hue Targets</div>
+
+                    <div style="margin-top:0.75em;">
+                        <label class="inputLabel" data-i18n="lblTargetGroups">Target Rooms & Zones</label>
+                        <div id="hueTargetGroupsList" class="hue-targets-grid"></div>
+                    </div>
+
+                    <div style="margin-top:1.25em;">
+                        <label class="inputLabel" data-i18n="lblTargetLights">Target Individual Lights</label>
+                        <div id="hueTargetLightsList" class="hue-targets-grid"></div>
+                    </div>
+
+                    <!-- Play Action -->
+                    <div class="hue-section-title" data-i18n="sectionPlay">▶️ On Playback Start</div>
+                    <div class="hue-action-row">
+                        <div class="inputContainer hue-slider-container">
+                            <label class="inputLabel" for="numPlayBrightness" data-i18n="lblBrightnessOff">Brightness (0 = Off, 1-100%)</label>
+                            <div class="hue-slider-row">
+                                <input type="range" id="numPlayBrightness" min="0" max="100" value="0" class="hue-range" />
+                                <span id="valPlayBrightness" class="hue-slider-badge">0%</span>
+                            </div>
+                        </div>
+                        <div class="inputContainer hue-duration-container">
+                            <label class="inputLabel" for="numPlayDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
+                            <input is="emby-input" type="number" id="numPlayDuration" min="0" max="60000" step="500" />
+                        </div>
+                    </div>
+                    <div class="inputContainer" id="rowPlayColor" style="margin-top: 1em;">
+                        <label class="inputLabel" data-i18n="lblColorHex">Hue Color</label>
+                        <div class="hue-color-picker-wrap">
+                            <div class="hue-color-preview-box" id="boxPlayColor">
+                                <input type="color" id="pickerPlayColor" value="#FFB366" class="hue-native-color-picker" />
+                            </div>
+                            <input is="emby-input" type="text" id="txtPlayColor" value="#FFB366" style="width:110px;" />
+                            <div class="hue-color-swatches" id="swatchesPlay"></div>
+                        </div>
+                        <div id="warnPlayNoColor" class="hue-color-warning" style="display:none;">
+                            💡 <span data-i18n="warnTargetsNoColor">Selected targets do not support color (brightness dimming only).</span>
+                        </div>
+                    </div>
+
+                    <!-- Pause Action -->
+                    <div class="hue-section-title" data-i18n="sectionPause">⏸️ On Pause</div>
+                    <div class="hue-action-row">
+                        <div class="inputContainer hue-slider-container">
+                            <label class="inputLabel" for="numPauseBrightness" data-i18n="lblBrightness">Brightness (1-100%)</label>
+                            <div class="hue-slider-row">
+                                <input type="range" id="numPauseBrightness" min="1" max="100" value="25" class="hue-range" />
+                                <span id="valPauseBrightness" class="hue-slider-badge">25%</span>
+                            </div>
+                        </div>
+                        <div class="inputContainer hue-duration-container">
+                            <label class="inputLabel" for="numPauseDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
+                            <input is="emby-input" type="number" id="numPauseDuration" min="0" max="60000" step="500" />
+                        </div>
+                    </div>
+                    <div class="inputContainer" id="rowPauseColor" style="margin-top: 1em;">
+                        <label class="inputLabel" data-i18n="lblColorHex">Hue Color</label>
+                        <div class="hue-color-picker-wrap">
+                            <div class="hue-color-preview-box" id="boxPauseColor">
+                                <input type="color" id="pickerPauseColor" value="#FFB366" class="hue-native-color-picker" />
+                            </div>
+                            <input is="emby-input" type="text" id="txtPauseColor" value="#FFB366" style="width:110px;" />
+                            <div class="hue-color-swatches" id="swatchesPause"></div>
+                        </div>
+                        <div id="warnPauseNoColor" class="hue-color-warning" style="display:none;">
+                            💡 <span data-i18n="warnTargetsNoColor">Selected targets do not support color (brightness dimming only).</span>
+                        </div>
+                    </div>
+
+                    <!-- Resume Action -->
+                    <div class="hue-section-title" data-i18n="sectionResume">⏯️ On Resume</div>
+                    <div class="checkboxContainer">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkResumeSameAsPlay" />
+                            <span data-i18n="lblResumeSameAsPlay">Apply same settings as playback start</span>
+                        </label>
+                    </div>
+                    <div id="resumeSettingsContainer">
+                        <div class="hue-action-row">
+                            <div class="inputContainer hue-slider-container">
+                                <label class="inputLabel" for="numResumeBrightness" data-i18n="lblBrightnessOff">Brightness (0 = Off, 1-100%)</label>
+                                <div class="hue-slider-row">
+                                    <input type="range" id="numResumeBrightness" min="0" max="100" value="0" class="hue-range" />
+                                    <span id="valResumeBrightness" class="hue-slider-badge">0%</span>
+                                </div>
+                            </div>
+                            <div class="inputContainer hue-duration-container">
+                                <label class="inputLabel" for="numResumeDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
+                                <input is="emby-input" type="number" id="numResumeDuration" min="0" max="60000" step="500" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stop Action -->
+                    <div class="hue-section-title" data-i18n="sectionStop">⏹️ On Stop</div>
+                    <div class="checkboxContainer">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkRestoreOnStop" />
+                            <span data-i18n="lblRestoreOnStop">Restore previous light state on stop</span>
+                        </label>
+                    </div>
+
+                    <div id="stopSettingsContainer">
+                        <div class="hue-action-row">
+                            <div class="inputContainer hue-slider-container">
+                                <label class="inputLabel" for="numStopBrightness" data-i18n="lblBrightness">Brightness (1-100%)</label>
+                                <div class="hue-slider-row">
+                                    <input type="range" id="numStopBrightness" min="1" max="100" value="80" class="hue-range" />
+                                    <span id="valStopBrightness" class="hue-slider-badge">80%</span>
+                                </div>
+                            </div>
+                            <div class="inputContainer hue-duration-container">
+                                <label class="inputLabel" for="numStopDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
+                                <input is="emby-input" type="number" id="numStopDuration" min="0" max="60000" step="500" />
+                            </div>
+                        </div>
+                        <div class="inputContainer" id="rowStopColor" style="margin-top: 1em;">
+                            <label class="inputLabel" data-i18n="lblColorHex">Hue Color</label>
+                            <div class="hue-color-picker-wrap">
+                                <div class="hue-color-preview-box" id="boxStopColor">
+                                    <input type="color" id="pickerStopColor" value="#FFFFFF" class="hue-native-color-picker" />
+                                </div>
+                                <input is="emby-input" type="text" id="txtStopColor" value="#FFFFFF" style="width:110px;" />
+                                <div class="hue-color-swatches" id="swatchesStop"></div>
+                            </div>
+                            <div id="warnStopNoColor" class="hue-color-warning" style="display:none;">
+                                💡 <span data-i18n="warnTargetsNoColor">Selected targets do not support color (brightness dimming only).</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hue-actions" style="justify-content:flex-end; margin-top: 2em;">
+                        <button is="emby-button" type="button" class="raised" id="btnCancelProfile" data-i18n="btnCancel">Cancel</button>
+                        <button is="emby-button" type="button" class="raised button-submit" id="btnSaveProfile" data-i18n="btnSaveProfile">Save Profile</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            (function () {
+                var pluginId = "c5fee93b-1c6d-4079-8799-9f7665a5ead5";
+                var currentConfig = null;
+                var currentResources = { rooms: [], zones: [], lights: [] };
+                var usersList = [];
+                var devicesList = [];
+                var editingProfileId = null;
+                var selectedBridgeIp = null;
+                var autoPairTimer = null;
+                var autoPairSecondsLeft = 30;
+                var isPairingCheckInProgress = false;
+
+                var translations = {
+                    fr: {
+                        configTitle: "Configuration Philips Hue",
+                        bridgeSectionTitle: "Connexion au Pont Hue",
+                        step1Title: "1. Sélectionnez votre pont Philips Hue",
+                        btnScanBridges: "🔍 Rechercher les ponts",
+                        step1Desc: "Choisissez votre pont Philips Hue détecté sur le réseau, ou saisissez son IP manuellement.",
+                        scanningText: "Recherche de ponts Philips Hue sur le réseau...",
+                        noBridgesFound: "Aucun pont trouvé automatiquement. Utilisez la saisie manuelle ci-dessous.",
+                        lnkManualIp: "Saisir l'adresse IP manuellement (Avancé)",
+                        lblManualIp: "Adresse IP manuelle du pont",
+                        step2Title: "2. Appuyez sur le bouton physique de votre pont",
+                        step2Desc: "Appuyez sur le gros bouton rond situé au-dessus de votre Philips Hue Bridge. La détection est automatique.",
+                        pairWaiting: "En attente de l'appui sur le bouton... ({0}s)",
+                        pairTimeout: "Délai expiré (30s). Aucun appui détecté sur le pont.",
+                        btnRetryPair: "🔄 Réessayer l'appairage",
+                        connectedToBridge: "Connecté au pont Hue",
+                        btnRefreshResources: "🔄 Actualiser lampes & pièces",
+                        btnUnpair: "Dissocier",
+                        profilesTitle: "Profils d'éclairage",
+                        btnAddProfile: "+ Ajouter un profil",
+                        configureProfileTitle: "Configurer le profil",
+                        addProfileTitle: "Nouveau profil",
+                        editProfileTitle: "Modifier le profil",
+                        btnCancel: "Annuler",
+                        btnSaveProfile: "Enregistrer le profil",
+                        lblProfileName: "Nom du profil",
+                        lblProfileEnabled: "Profil activé",
+                        sectionTriggers: "🎯 Déclencheurs & Filtres",
+                        lblTargetUsers: "Utilisateurs Jellyfin ciblés",
+                        descTargetUsers: "Cochez les utilisateurs Jellyfin associés à ce profil (aucun coché = tous les utilisateurs) :",
+                        lblTargetDevices: "Appareils Jellyfin ciblés",
+                        descTargetDevices: "Cochez les appareils Jellyfin associés à ce profil (aucun coché = tous les appareils) :",
+                        lblTriggerMovies: "Déclencher sur les films",
+                        lblTriggerEpisodes: "Déclencher sur les épisodes de séries",
+                        lblEnableTimeFilter: "Restreindre à une plage horaire",
+                        lblTimeFilterStart: "De (heure de début)",
+                        lblTimeFilterEnd: "À (heure de fin)",
+                        descTimeFilterActive: "Le profil ne se déclenchera qu'entre {0} et {1} (utile pour éviter d'allumer les lumières en plein jour).",
+                        timeAllDay: "24h/24",
+                        sectionTargets: "💡 Cibles Hue",
+                        lblTargetGroups: "Pièces & Zones ciblées",
+                        lblTargetLights: "Lampes individuelles ciblées",
+                        sectionPlay: "▶️ Au lancement de la lecture",
+                        sectionPause: "⏸️ En pause",
+                        sectionResume: "⏯️ À la reprise",
+                        lblResumeSameAsPlay: "Appliquer les mêmes réglages qu'au lancement de la lecture",
+                        sectionStop: "⏹️ À l'arrêt",
+                        lblBrightnessOff: "Luminosité (0 = Éteint, 1-100%)",
+                        lblBrightness: "Luminosité (1-100%)",
+                        lblFadeDuration: "Durée de transition (ms)",
+                        lblColorHex: "Couleur Hue",
+                        warnTargetsNoColor: "Les cibles sélectionnées ne prennent pas en charge la couleur (uniquement variation d'intensité).",
+                        lightOff: "Éteint",
+                        roomType: "Pièce",
+                        zoneType: "Zone",
+                        lightType: "Lampe",
+                        colorSupported: "Couleur",
+                        whiteAdjustable: "Blanc réglable",
+                        whiteFixed: "Blanc fixe",
+                        whiteOnly: "Blanc",
+                        warnTargetsNoColor: "Les cibles sélectionnées ne prennent pas en charge la couleur (uniquement variation d'intensité).",
+                        warnTargetsWhiteAmbiance: "Les cibles sélectionnées prennent en charge les nuances de blanc (température de couleur).",
+                        warnTargetsFixedWhite: "Vos ampoules sélectionnées ont une teinte blanche fixe (2700K). Seule la luminosité sera modifiée par le pont.",
+                        noDevicesFound: "Aucun appareil Jellyfin trouvé.",
+                        noUsersFound: "Aucun utilisateur Jellyfin trouvé.",
+                        noTargetsAvailable: "Aucune pièce ou lampe trouvée sur le pont Hue.",
+                        lblRestoreOnStop: "Rétablir l'état des lampes d'avant la lecture",
+                        noProfilesConfigured: "Aucun profil d'éclairage configuré.<br/>Associez votre pont Hue ci-dessus, puis cliquez sur <strong>\"Ajouter un profil\"</strong>.",
+                        btnEdit: "Modifier",
+                        btnTest: "Tester",
+                        btnDelete: "Supprimer",
+                        confirmDeleteProfile: "Voulez-vous vraiment supprimer ce profil ?",
+                        confirmUnpair: "Voulez-vous vraiment dissocier ce pont Philips Hue ?",
+                        unpairDone: "Pont dissocié.",
+                        testPulseGroup: "Signal test envoyé à la pièce / zone !",
+                        testPulseLight: "Signal test envoyé à la lampe !",
+                        btnTesting: "Test en cours ({0}s)...",
+                        testPhasePlay: "▶️ Lecture ({0}s)...",
+                        testPhasePause: "⏸️ Pause ({0}s)...",
+                        testPhaseResume: "⏯️ Reprise ({0}s)...",
+                        testPhaseStop: "⏹️ Arrêt ({0}s)...",
+                        testPhaseRestore: "🔄 Rétablissement ({0}s)...",
+                        testProfileRestored: "✅ Simulation terminée : scénario Lecture ➔ Pause ➔ Reprise ➔ Arrêt validé !",
+                        noTargetsInProfile: "Aucune lampe ou pièce sélectionnée dans ce profil.",
+                        pairSuccess: "✅ Pont appairé avec succès !",
+                        pairPressButtonFirst: "⚠️ Bouton non pressé. <strong>Appuyez sur le bouton de votre Hue Bridge</strong>, puis réessayez !",
+                        allUsers: "Tous les utilisateurs",
+                        allDevices: "Tous les appareils",
+                        userCount: "{0} utilisateur(s)",
+                        targetsCount: "{0} cible(s) Hue",
+                        bridgeNotSetup: "Veuillez d'abord associer votre pont Philips Hue ci-dessus avant de créer un profil.",
+                        badgePaired: "Connecté",
+                        badgeNotPaired: "Non associé",
+                        badgeActive: "Actif",
+                        badgeDisabled: "Désactivé",
+                        tagMovies: "Films",
+                        tagEpisodes: "Épisodes",
+                        alertSelectBridgeFirst: "Veuillez d'abord sélectionner ou saisir l'adresse IP du pont Hue.",
+                        alertRefreshed: "Lampes et pièces actualisées !",
+                        presetCandle: "Bougie / Ambre",
+                        presetWarm2700: "Chaud 2700K",
+                        presetSoft3000: "Doux 3000K",
+                        presetNeutral4000: "Neutre 4000K",
+                        presetCool6500: "Froid 6500K",
+                        presetNightBlue: "Bleu nuit",
+                        presetSunset: "Crépuscule",
+                        presetRed: "Rouge",
+                        presetGreen: "Vert",
+                        presetPurple: "Violet",
+                        activeJustNow: "À l'instant",
+                        activeHoursAgo: "Il y a {0}h",
+                        activeYesterday: "Hier",
+                        activeDaysAgo: "Il y a {0}j",
+                        roleAdmin: "Administrateur",
+                        roleUser: "Utilisateur"
+                    },
+                    en: {
+                        configTitle: "Philips Hue Lighting Configuration",
+                        bridgeSectionTitle: "Hue Bridge Connection",
+                        step1Title: "1. Select your Philips Hue Bridge",
+                        btnScanBridges: "🔍 Scan for Bridges",
+                        step1Desc: "Choose your Philips Hue Bridge discovered on the network, or enter its IP address manually.",
+                        scanningText: "Scanning your network for Philips Hue Bridges...",
+                        noBridgesFound: "No bridges found automatically. Use manual IP entry below.",
+                        lnkManualIp: "Enter Bridge IP manually (Advanced)",
+                        lblManualIp: "Manual Bridge IP Address",
+                        step2Title: "2. Press the physical button on your Bridge",
+                        step2Desc: "Press the large round button located on top of your Philips Hue Bridge. Detection is automatic.",
+                        pairWaiting: "Waiting for button press... ({0}s)",
+                        pairTimeout: "Timed out (30s). No button press detected on Bridge.",
+                        btnRetryPair: "🔄 Retry pairing",
+                        connectedToBridge: "Connected to Hue Bridge",
+                        btnRefreshResources: "🔄 Refresh Lights & Groups",
+                        btnUnpair: "Unpair",
+                        profilesTitle: "Lighting Profiles",
+                        btnAddProfile: "+ Add Profile",
+                        configureProfileTitle: "Configure Profile",
+                        addProfileTitle: "Add Profile",
+                        editProfileTitle: "Edit Profile",
+                        btnCancel: "Cancel",
+                        btnSaveProfile: "Save Profile",
+                        lblProfileName: "Profile Name",
+                        lblProfileEnabled: "Profile Enabled",
+                        sectionTriggers: "🎯 Triggers & Filters",
+                        lblTargetUsers: "Target Users",
+                        descTargetUsers: "Check the Jellyfin users that trigger this profile (none checked = all users):",
+                        lblTargetDevices: "Target Devices",
+                        descTargetDevices: "Check the Jellyfin devices that trigger this profile (none checked = all devices):",
+                        lblTriggerMovies: "Trigger on Movies",
+                        lblTriggerEpisodes: "Trigger on TV Episodes",
+                        lblEnableTimeFilter: "Restrict to active time range",
+                        lblTimeFilterStart: "From (start time)",
+                        lblTimeFilterEnd: "To (end time)",
+                        descTimeFilterActive: "Profile will only trigger between {0} and {1} (handy to avoid changing lights during daylight).",
+                        timeAllDay: "All day (24/7)",
+                        sectionTargets: "💡 Hue Targets",
+                        lblTargetGroups: "Target Rooms & Zones",
+                        lblTargetLights: "Target Individual Lights",
+                        sectionPlay: "▶️ On Playback Start",
+                        sectionPause: "⏸️ On Pause",
+                        sectionResume: "⏯️ On Resume",
+                        lblResumeSameAsPlay: "Apply same settings as playback start",
+                        sectionStop: "⏹️ On Stop",
+                        lblBrightnessOff: "Brightness (0 = Off, 1-100%)",
+                        lblBrightness: "Brightness (1-100%)",
+                        lblFadeDuration: "Fade Duration (ms)",
+                        lblColorHex: "Hue Color",
+                        warnTargetsNoColor: "Selected targets do not support color (brightness dimming only).",
+                        lightOff: "Off",
+                        roomType: "Room",
+                        zoneType: "Zone",
+                        lightType: "Light",
+                        colorSupported: "Color",
+                        whiteAdjustable: "Tunable white",
+                        whiteFixed: "Fixed white",
+                        whiteOnly: "White",
+                        warnTargetsNoColor: "Selected targets do not support color (brightness dimming only).",
+                        warnTargetsWhiteAmbiance: "Selected targets support shades of white (color temperature).",
+                        warnTargetsFixedWhite: "Selected lights have a fixed warm white shade (2700K). Only brightness will be adjusted by Bridge.",
+                        noDevicesFound: "No Jellyfin devices found.",
+                        noUsersFound: "No Jellyfin users found.",
+                        noTargetsAvailable: "No rooms or lights found on Hue Bridge.",
+                        lblRestoreOnStop: "Restore previous light state on stop",
+                        noProfilesConfigured: "No lighting profiles created yet.<br/>Pair your Hue Bridge above, then click <strong>\"Add Profile\"</strong>.",
+                        btnEdit: "Edit",
+                        btnTest: "Test Action",
+                        btnDelete: "Delete",
+                        confirmDeleteProfile: "Are you sure you want to delete this profile?",
+                        confirmUnpair: "Are you sure you want to unpair from this Hue Bridge?",
+                        unpairDone: "Bridge unpaired.",
+                        testPulseGroup: "Test pulse sent to group!",
+                        testPulseLight: "Test pulse sent to light!",
+                        btnTesting: "Testing ({0}s)...",
+                        testPhasePlay: "▶️ Play ({0}s)...",
+                        testPhasePause: "⏸️ Pause ({0}s)...",
+                        testPhaseResume: "⏯️ Resume ({0}s)...",
+                        testPhaseStop: "⏹️ Stop ({0}s)...",
+                        testPhaseRestore: "🔄 Restoring ({0}s)...",
+                        testProfileRestored: "✅ Simulation complete: Play ➔ Pause ➔ Resume ➔ Stop scenario verified!",
+                        noTargetsInProfile: "No lights or groups selected in this profile.",
+                        pairSuccess: "✅ Bridge paired successfully!",
+                        pairPressButtonFirst: "⚠️ Link button not pressed yet. <strong>Press the round button on your Hue Bridge</strong>, then click again!",
+                        allUsers: "All Users",
+                        allDevices: "All Devices",
+                        userCount: "{0} User(s)",
+                        targetsCount: "{0} Hue Target(s)",
+                        bridgeNotSetup: "Please pair your Philips Hue Bridge above before creating a lighting profile.",
+                        badgePaired: "Paired",
+                        badgeNotPaired: "Not Paired",
+                        badgeActive: "Active",
+                        badgeDisabled: "Disabled",
+                        tagMovies: "Movies",
+                        tagEpisodes: "Episodes",
+                        alertSelectBridgeFirst: "Please select or enter a Hue Bridge IP first.",
+                        alertRefreshed: "Lights and groups refreshed!",
+                        presetCandle: "Candle / Amber",
+                        presetWarm2700: "Warm 2700K",
+                        presetSoft3000: "Soft 3000K",
+                        presetNeutral4000: "Neutral 4000K",
+                        presetCool6500: "Cool 6500K",
+                        presetNightBlue: "Night Blue",
+                        presetSunset: "Sunset",
+                        presetRed: "Red",
+                        presetGreen: "Green",
+                        presetPurple: "Purple",
+                        activeJustNow: "Just now",
+                        activeHoursAgo: "{0}h ago",
+                        activeYesterday: "Yesterday",
+                        activeDaysAgo: "{0}d ago",
+                        roleAdmin: "Administrator",
+                        roleUser: "User"
+                    }
+                };
+
+                function getLocale() {
+                    var lang = (document.documentElement.getAttribute('lang') ||
+                                document.documentElement.lang ||
+                                (window.navigator && (window.navigator.language || window.navigator.userLanguage)) ||
+                                'en').toLowerCase();
+                    return lang.indexOf('fr') === 0 ? 'fr' : 'en';
+                }
+
+                function t(key, param) {
+                    var locale = getLocale();
+                    var dict = translations[locale] || translations.en;
+                    var str = dict[key] || translations.en[key] || (translations.fr && translations.fr[key]) || key;
+                    if (param !== undefined && param !== null) {
+                        str = str.replace('{0}', param);
+                    }
+                    return str;
+                }
+
+                function applyStaticTranslations() {
+                    var page = document.getElementById("HueConfigPage");
+                    if (!page) return;
+
+                    page.querySelectorAll('[data-i18n]').forEach(function (el) {
+                        var key = el.getAttribute('data-i18n');
+                        el.innerText = t(key);
+                    });
+
+                    page.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+                        var key = el.getAttribute('data-i18n-html');
+                        el.innerHTML = t(key);
+                    });
+
+                    page.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+                        var key = el.getAttribute('data-i18n-placeholder');
+                        el.setAttribute('placeholder', t(key));
+                    });
+                }
+
+                function loadConfig() {
+                    applyStaticTranslations();
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        currentConfig = config;
+                        if (!currentConfig.Profiles) {
+                            currentConfig.Profiles = [];
+                        }
+
+                        renderConnectionState();
+                        renderProfiles();
+                        fetchUsers();
+                        fetchDevices();
+
+                        if (config.BridgeIp && config.BridgeUsername) {
+                            loadHueResources();
+                        } else {
+                            scanForBridges();
+                        }
+
+                        Dashboard.hideLoadingMsg();
+                    });
+                }
+
+                function renderConnectionState() {
+                    var isPaired = currentConfig.BridgeIp && currentConfig.BridgeUsername;
+                    var badge = document.getElementById("bridgeStatusBadge");
+                    var setupSec = document.getElementById("bridgeSetupSection");
+                    var connectedSec = document.getElementById("bridgeConnectedSection");
+                    var btnAdd = document.getElementById("btnAddProfile");
+
+                    if (isPaired) {
+                        badge.className = "hue-badge hue-badge-success";
+                        badge.textContent = t("badgePaired");
+                        setupSec.style.display = "none";
+                        connectedSec.style.display = "block";
+                        document.getElementById("connectedBridgeIpText").textContent = currentConfig.BridgeIp;
+                        document.getElementById("connectedBridgeAppKeyText").textContent = currentConfig.BridgeUsername;
+                        btnAdd.disabled = false;
+                        btnAdd.style.opacity = "1";
+                        btnAdd.style.cursor = "pointer";
+                        btnAdd.title = "";
+                    } else {
+                        badge.className = "hue-badge hue-badge-warning";
+                        badge.textContent = t("badgeNotPaired");
+                        setupSec.style.display = "block";
+                        connectedSec.style.display = "none";
+                        btnAdd.disabled = true;
+                        btnAdd.style.opacity = "0.5";
+                        btnAdd.style.cursor = "not-allowed";
+                        btnAdd.title = t("bridgeNotSetup");
+                    }
+                }
+
+                function scanForBridges() {
+                    var scanningText = document.getElementById("bridgesScanningText");
+                    var list = document.getElementById("discoveredBridgesList");
+                    scanningText.style.display = "block";
+                    list.innerHTML = "";
+
+                    ApiClient.getJSON(ApiClient.getUrl("Hue/Discover")).then(function (bridges) {
+                        scanningText.style.display = "none";
+
+                        if (!bridges || bridges.length === 0) {
+                            list.innerHTML = '<div style="color:#aaa; font-style:italic;">' + t("noBridgesFound") + '</div>';
+                            document.getElementById("manualIpContainer").style.display = "block";
+                            return;
+                        }
+
+                        bridges.forEach(function (b, index) {
+                            var item = document.createElement("div");
+                            item.className = "hue-bridge-item";
+                            item.innerHTML =
+                                '<div>' +
+                                    '<div class="hue-bridge-name">' +
+                                        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align:middle; opacity:0.85;"><path d="M17.7,4.4c-0.53,0-0.95-0.42-0.95-0.95S17.18,2.5,17.7,2.5s0.95,0.42,0.95,0.95S18.23,4.4,17.7,4.4z M5.35,3.45c0-0.53,0.42-0.95,0.95-0.95s0.95,0.42,0.95,0.95S6.82,4.4,6.3,4.4 S5.35,3.97,5.35,3.45 M12,2.5c0.53,0,0.95,0.42,0.95,0.95S12.53,4.4,12,4.4s-0.95-0.42-0.95-0.95S11.47,2.5,12,2.5 M19.6,0.59H4.4 c-2.09,0-3.8,1.71-3.8,3.8V19.6c0,2.09,1.71,3.8,3.8,3.8h15.2c2.09,0,3.8-1.71,3.8-3.8V4.4C23.41,2.31,21.69,0.59,19.6,0.59 M12,17.7c-3.15,0-5.7-2.56-5.7-5.7S8.85,6.3,12,6.3 s5.7,2.56,5.7,5.7S15.15,17.7,12,17.7"/></svg>' +
+                                        '<span>Philips Hue Bridge</span>' +
+                                    '</div>' +
+                                    '<div class="hue-bridge-meta">' +
+                                        '<div><strong>IP:</strong> ' + escapeHtml(b.internalipaddress) + '</div>' +
+                                        '<div><strong>Bridge ID:</strong> ' + escapeHtml(b.id) + '</div>' +
+                                    '</div>' +
+                                '</div>';
+
+                            item.addEventListener("click", function () {
+                                document.querySelectorAll(".hue-bridge-item").forEach(function (el) { el.classList.remove("selected"); });
+                                item.classList.add("selected");
+                                selectBridge(b.internalipaddress);
+                            });
+
+                            list.appendChild(item);
+
+                            if (index === 0) {
+                                item.classList.add("selected");
+                                selectBridge(b.internalipaddress);
+                            }
+                        });
+                    }).catch(function (err) {
+                        scanningText.style.display = "none";
+                        console.error("Discovery error:", err);
+                        document.getElementById("manualIpContainer").style.display = "block";
+                    });
+                }
+
+                function stopAutoPairing() {
+                    if (autoPairTimer) {
+                        clearInterval(autoPairTimer);
+                        autoPairTimer = null;
+                    }
+                    isPairingCheckInProgress = false;
+                }
+
+                function startAutoPairing(ip) {
+                    stopAutoPairing();
+                    if (!ip) return;
+
+                    autoPairSecondsLeft = 30;
+                    var pairStep = document.getElementById("pairStepContainer");
+                    pairStep.style.display = "block";
+
+                    var statusDiv = document.getElementById("pairStatusText");
+                    var fillBar = document.getElementById("pairProgressFill");
+                    var btnRetry = document.getElementById("btnRetryPair");
+
+                    btnRetry.style.display = "none";
+                    fillBar.style.transition = "width 1s linear";
+                    fillBar.style.width = "100%";
+                    fillBar.style.background = "#00a4dc";
+
+                    statusDiv.style.color = "#00a4dc";
+                    statusDiv.innerHTML = '<span class="hue-spinner"></span> ' + t("pairWaiting", autoPairSecondsLeft);
+
+                    function doCheck() {
+                        if (isPairingCheckInProgress) return;
+                        isPairingCheckInProgress = true;
+
+                        ApiClient.ajax({
+                            type: "POST",
+                            url: ApiClient.getUrl("Hue/Pair"),
+                            data: JSON.stringify({ BridgeIp: ip }),
+                            dataType: "json",
+                            contentType: "application/json",
+                            headers: {
+                                "Accept": "application/json"
+                            }
+                        }).then(function (res) {
+                            return (res && typeof res.json === "function") ? res.json() : Promise.resolve(res);
+                        }).then(function (parsed) {
+                            isPairingCheckInProgress = false;
+                            if (typeof parsed === "string") {
+                                try { parsed = JSON.parse(parsed); } catch (e) { parsed = {}; }
+                            }
+                            console.log("Hue pair check response:", parsed);
+                            var isSuccess = parsed && (parsed.success === true || parsed.Success === true);
+                            if (isSuccess) {
+                                stopAutoPairing();
+                                fillBar.style.width = "100%";
+                                fillBar.style.background = "#2e7d32";
+                                statusDiv.style.color = "#81c784";
+                                statusDiv.innerHTML = t("pairSuccess");
+
+                                currentConfig.BridgeIp = ip;
+                                currentConfig.BridgeUsername = parsed.username || parsed.Username || "";
+                                currentConfig.BridgeClientKey = parsed.clientKey || parsed.ClientKey || "";
+
+                                setTimeout(function () {
+                                    renderConnectionState();
+                                    loadHueResources();
+                                }, 600);
+                            }
+                        }).catch(function (err) {
+                            isPairingCheckInProgress = false;
+                            console.warn("Hue pair polling check:", err);
+                        });
+                    }
+
+                    // Check immediately once
+                    doCheck();
+
+                    // And interval countdown every second
+                    autoPairTimer = setInterval(function () {
+                        autoPairSecondsLeft--;
+
+                        var pct = Math.max(0, Math.round((autoPairSecondsLeft / 30) * 100));
+                        fillBar.style.width = pct + "%";
+
+                        if (autoPairSecondsLeft <= 10) {
+                            fillBar.style.background = "#e65100";
+                        }
+
+                        if (autoPairSecondsLeft > 0) {
+                            statusDiv.innerHTML = '<span class="hue-spinner"></span> ' + t("pairWaiting", autoPairSecondsLeft);
+                            doCheck();
+                        } else {
+                            stopAutoPairing();
+                            fillBar.style.width = "0%";
+                            statusDiv.style.color = "#e65100";
+                            statusDiv.innerHTML = "⚠️ " + t("pairTimeout");
+                            btnRetry.style.display = "inline-block";
+                        }
+                    }, 1000);
+                }
+
+                function selectBridge(ip) {
+                    selectedBridgeIp = ip;
+                    document.getElementById("txtBridgeIp").value = ip;
+                    startAutoPairing(ip);
+                }
+
+                function fetchUsers() {
+                    return ApiClient.getUsers().then(function (users) {
+                        usersList = users || [];
+                    });
+                }
+
+                function fetchDevices() {
+                    return ApiClient.getJSON(ApiClient.getUrl("Devices")).then(function (res) {
+                        devicesList = (res && res.Items) ? res.Items : (Array.isArray(res) ? res : []);
+                    }).catch(function (err) {
+                        console.warn("Could not fetch Jellyfin devices:", err);
+                        devicesList = [];
+                    });
+                }
+
+                function loadHueResources() {
+                    return ApiClient.getJSON(ApiClient.getUrl("Hue/Resources")).then(function (res) {
+                        currentResources = res || { rooms: [], zones: [], lights: [] };
+                        return currentResources;
+                    }).catch(function (err) {
+                        console.warn("Could not fetch Hue resources:", err);
+                        currentResources = { rooms: [], zones: [], lights: [] };
+                        return currentResources;
+                    });
+                }
+
+                function formatRelativeDate(dateStr) {
+                    if (!dateStr) return "";
+                    try {
+                        var d = new Date(dateStr);
+                        if (isNaN(d.getTime())) return "";
+                        var now = new Date();
+                        var diffMs = now - d;
+                        if (diffMs < 0) diffMs = 0;
+                        var diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                        var diffDays = Math.floor(diffHours / 24);
+                        if (diffHours < 1) return t("activeJustNow");
+                        if (diffHours < 24) return t("activeHoursAgo", diffHours);
+                        if (diffDays === 1) return t("activeYesterday");
+                        if (diffDays < 7) return t("activeDaysAgo", diffDays);
+                        return d.toLocaleDateString();
+                    } catch (e) {
+                        return "";
+                    }
+                }
+
+                var HUE_SVG_ICONS = {
+                    "bulb": "<path d=\"M9 18h6\" /> <path d=\"M10 21h4\" /> <path d=\"M12 3a6 6 0 0 0-4 10.5c.6.55 1 1.4 1 2.5h6c0-1.1.4-1.95 1-2.5A6 6 0 0 0 12 3Z\" />",
+                    "lightstrip": "<rect x=\"3\" y=\"9\" width=\"18\" height=\"6\" rx=\"3\" /> <circle cx=\"7\" cy=\"12\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\" /> <circle cx=\"12\" cy=\"12\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\" /> <circle cx=\"17\" cy=\"12\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\" />",
+                    "spot": "<path d=\"M7 3h10l-1.6 6H8.6L7 3Z\" /> <path d=\"M9 9c0 5 .6 9 3 9s3-4 3-9\" /> <path d=\"M9 20h6\" />",
+                    "zone": "<rect x=\"4\" y=\"4\" width=\"10\" height=\"10\" rx=\"2.4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" /><rect x=\"10.5\" y=\"10.5\" width=\"9.5\" height=\"9.5\" rx=\"2.4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" />",
+                    "hue-bloom": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18.69,17.65c-1.49-0.67-4.69-2.54-7.66-5.47c-3.06-3.02-5.01-6.2-5.61-7.64C5.3,4.27,5.55,3.98,5.85,4.06 c0.41,0.1,0.96,0.3,1.66,0.67c3.87,2.07,8.91,7.05,11.02,10.87c0.37,0.67,0.56,1.23,0.66,1.66C19.25,17.54,18.95,17.77,18.69,17.65 M19.49,15.07c-2.21-4.02-7.38-9.11-11.46-11.3c-1.24-0.66-2.21-0.9-2.92-0.9c0,0-0.45-0.01-0.79,0.13c-0.9,0.39-1.4,1.45-1.4,3.76 c0,2.83,1.19,5.59,3.05,7.86l-2.93,4.36c-0.33,0.48,0.02,1.13,0.6,1.12l4.8-0.02c0.48,0,0.94-0.24,1.21-0.64l0.73-1.08 c1.93,1.11,4.04,1.75,6.09,1.75c1.75,0,2.87-0.42,3.59-1.14C20.48,18.59,20.61,17.12,19.49,15.07\" /> </g>",
+                    "hue-bollard": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M15.75,9.38c0,0.62-1.68,1.12-3.75,1.12S8.25,10,8.25,9.38V6.22c0-0.18,0.2-0.28,0.35-0.18 C9.2,6.42,10.5,6.75,12,6.75s2.8-0.33,3.4-0.71c0.15-0.1,0.35,0,0.35,0.18V9.38z M10.01,3.96c1.2-0.28,3.04-0.28,4.16,0 c1.14,0.29,1.12,0.76-0.09,1.06c-1.23,0.31-3.19,0.31-4.32,0C8.65,4.72,8.78,4.24,10.01,3.96z M15.25,3.36 C14.41,3.12,13.3,3,12.17,3c-1.12,0-2.27,0.12-3.16,0.36C8.02,3.62,7.5,3.98,7.5,4.34v15.42c0,0.3,0.38,0.6,1.14,0.84 c0.86,0.26,2.01,0.4,3.19,0.4c1.18,0,2.37-0.14,3.29-0.4S16.5,20,16.5,19.66V4.24C16.5,3.91,16.08,3.6,15.25,3.36z\" /> </g>",
+                    "hue-bulb-candle": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M15.73,12.34c-0.79,0.22-2.04,0.41-3.73,0.41s-2.94-0.2-3.73-0.41C8.51,8.41,10.59,3,12,3 C13.41,3,15.49,8.41,15.73,12.34z M15.75,13.1c0,0.03,0,0.07,0,0.1c0,1.86-0.57,3.17-1.3,3.89c-0.67,0.1-1.49,0.16-2.45,0.16 s-1.78-0.06-2.45-0.16c-0.73-0.72-1.3-2.04-1.3-3.89c0-0.03,0-0.07,0-0.1c1.16,0.3,2.71,0.4,3.75,0.4S14.59,13.4,15.75,13.1z M10.12,17.92C10.77,17.98,11.49,18,12,18s1.23-0.02,1.88-0.08l-0.31,1.86c-0.02,0.13-0.08,0.25-0.19,0.34l-0.29,0.25 c-0.02,0.02-0.04,0.04-0.05,0.05l-0.31,0.35C12.6,20.92,12.42,21,12.23,21h-0.46c-0.19,0-0.37-0.08-0.49-0.21l-0.31-0.35 c-0.02-0.02-0.04-0.04-0.05-0.05l-0.29-0.25c-0.11-0.09-0.17-0.21-0.19-0.34L10.12,17.92z\" /> </g>",
+                    "hue-bulb-classic": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M7.18,9.91c1.41,0.45,3.48,0.59,4.82,0.59s3.41-0.14,4.82-0.59c-0.57,1.51-1.57,2.18-1.81,3.59 c-0.11,0.61-0.19,1.47-0.13,2.1c0.04,0.4-0.27,0.75-0.67,0.79c-0.65,0.07-1.38,0.11-2.21,0.11s-1.56-0.04-2.21-0.11 c-0.4-0.04-0.7-0.39-0.67-0.79c0.06-0.63-0.03-1.49-0.13-2.1C8.75,12.09,7.76,11.42,7.18,9.91z M9.75,17.15 c0.78,0.07,1.64,0.1,2.25,0.1s1.47-0.03,2.25-0.1l-0.38,2.33c-0.02,0.16-0.1,0.32-0.23,0.43l-0.35,0.32 c-0.02,0.02-0.05,0.04-0.07,0.07l-0.37,0.44C12.72,20.9,12.5,21,12.27,21h-0.55c-0.23,0-0.45-0.1-0.59-0.27l-0.37-0.44 c-0.02-0.02-0.04-0.05-0.07-0.07l-0.35-0.32c-0.12-0.11-0.21-0.27-0.23-0.43L9.75,17.15z M12,3c2.89,0,5.25,2.5,5.25,4.88 c0,0.21-0.04,0.41-0.06,0.61c-0.02,0.19-0.06,0.35-0.1,0.53C16.27,9.36,14.54,9.75,12,9.75S7.73,9.36,6.91,9.01 c-0.04-0.18-0.07-0.34-0.1-0.53c-0.02-0.2-0.06-0.39-0.06-0.61C6.75,5.5,9.11,3,12,3z\" /> </g>",
+                    "hue-bulb-flood": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M6.13,7.56C7.66,8.03,9.88,8.25,12,8.25s4.34-0.22,5.87-0.69l-2.71,3.21c-0.26,0.31-0.41,0.7-0.42,1.1 l-0.11,3.84c-0.01,0.39-0.32,0.7-0.7,0.73c-0.59,0.04-1.23,0.06-1.92,0.06s-1.33-0.02-1.92-0.06c-0.39-0.03-0.69-0.34-0.7-0.73 l-0.11-3.84c-0.01-0.41-0.16-0.79-0.43-1.1L6.13,7.56z M18.75,4.99V5.7c0,0.27-0.05,0.52-0.14,0.77C17.66,6.96,15.41,7.5,12,7.5 S6.34,6.96,5.39,6.47C5.3,6.23,5.25,5.97,5.25,5.7V4.99c0-0.13,0.05-0.27,0.14-0.4C6.01,3.68,8.74,3,12,3 C15.73,3,18.75,3.89,18.75,4.99z M9.75,17.15c0.78,0.07,1.64,0.1,2.25,0.1s1.47-0.03,2.25-0.1l-0.38,2.33 c-0.02,0.16-0.1,0.32-0.23,0.43l-0.35,0.32c-0.02,0.02-0.05,0.04-0.07,0.07l-0.37,0.44C12.72,20.9,12.5,21,12.27,21h-0.55 c-0.23,0-0.45-0.1-0.59-0.27l-0.37-0.44c-0.02-0.02-0.04-0.05-0.07-0.07l-0.35-0.32c-0.12-0.11-0.21-0.27-0.23-0.43L9.75,17.15z\" /> </g>",
+                    "hue-bulb-spot": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M12,3.75c3.73,0,6.75,0.89,6.75,1.99c0,1.1-3.02,1.99-6.75,1.99S5.25,6.84,5.25,5.74c0-0.13,0.05-0.27,0.14-0.4 C6.01,4.43,8.74,3.75,12,3.75z M6.16,7.57C7.79,8.25,10.27,8.48,12,8.48s4.21-0.23,5.84-0.91c-0.25,1.44-0.86,3.41-2.67,4.72 C15.02,12.43,15,12.66,15,13.13v2.77c0,0.36-0.11,0.71-0.35,0.97c-0.38,0.43-1.18,0.75-2.65,0.75s-2.28-0.32-2.65-0.75 C9.11,16.6,9,16.25,9,15.89v-2.77c0-0.47-0.02-0.7-0.17-0.84C7.02,10.97,6.41,9,6.16,7.57z M12.75,19.5v-1.16 c0.67-0.06,1.16-0.21,1.5-0.4v1.55c0,0.41-0.34,0.75-0.75,0.75S12.75,19.91,12.75,19.5z M9.75,19.5v-1.55 c0.34,0.19,0.83,0.34,1.5,0.4v1.16c0,0.41-0.34,0.75-0.75,0.75S9.75,19.91,9.75,19.5z\" /> </g>",
+                    "hue-bulb-sultan": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M16.73,4.05c1.14,1.05,0.11,2.99-0.25,3.68C15.54,8,14.03,8.25,12,8.25C9.97,8.25,8.46,8,7.52,7.73 C7.17,7.04,6.13,5.1,7.27,4.05C8.5,2.93,11.79,3,12,3S15.5,2.93,16.73,4.05z M12,9c1.14,0,2.81-0.11,4.15-0.41 c-1.02,3.16-1.19,6.06-1.16,6.88c0.01,0.19-0.06,0.38-0.18,0.52l-0.33,0.38c-0.71,0.09-1.54,0.14-2.48,0.14s-1.77-0.05-2.48-0.14 l-0.33-0.38C9.06,15.84,9,15.66,9,15.46c0.04-0.82-0.14-3.71-1.16-6.88C9.19,8.89,10.86,9,12,9z M9.75,17.14 c0.78,0.08,1.64,0.11,2.25,0.11c0.61,0,1.47-0.03,2.25-0.11l-0.38,2.33c-0.02,0.16-0.1,0.32-0.23,0.43l-0.35,0.32 c-0.02,0.02-0.05,0.04-0.07,0.07l-0.37,0.44C12.72,20.9,12.51,21,12.28,21h-0.55c-0.23,0-0.45-0.1-0.59-0.27l-0.37-0.44 c-0.02-0.02-0.04-0.05-0.07-0.07l-0.35-0.32c-0.12-0.11-0.2-0.27-0.22-0.43L9.75,17.14z\" /> </g>",
+                    "hue-ceiling-round": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18.85,14.36c-3.68,0.9-9.74,0.9-13.42,0c-3.64-0.89-3.53-2.3,0.16-3.16c3.63-0.84,9.46-0.84,13.09,0 C22.36,12.06,22.48,13.47,18.85,14.36 M23.31,7c-0.27-0.67-1.39-1.31-3.33-1.82c-4.37-1.14-11.36-1.14-15.72,0 C2.34,5.69,1.23,6.33,0.95,7C0.9,7.12,0.88,7.22,0.88,7.34v3.79c0,0.11,0.02,2.91,0.07,3.01c0.27,0.64,1.3,1.27,3.13,1.77 c4.42,1.21,11.69,1.21,16.11,0c1.82-0.5,2.85-1.12,3.12-1.77c0.05-0.11,0.07-0.22,0.07-0.33V7.34C23.38,7.22,23.36,7.12,23.31,7\" /> </g>",
+                    "hue-ceiling-square": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M17.85,13.67l-5.38,1.99c-0.3,0.11-0.64,0.11-0.95,0l-5.38-1.99c-0.2-0.07-0.2-0.38,0-0.45l5.39-1.89 c0.29-0.1,0.61-0.1,0.91,0l5.39,1.89C18.05,13.29,18.05,13.6,17.85,13.67 M20.6,9.95l-8.13-3.11c-0.3-0.12-0.64-0.12-0.95,0 L3.4,9.95C3.16,10.04,3,10.3,3,10.6v2.79c0,0.3,0.16,0.57,0.4,0.66l8.13,3.12c0.31,0.12,0.64,0.12,0.95,0l8.13-3.12 c0.24-0.09,0.4-0.36,0.4-0.66V10.6C21,10.3,20.84,10.04,20.6,9.95\" /> </g>",
+                    "hue-desk-lamp": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M17.14,7.3c1.43-0.48,1.7-0.09,0.59,0.89c-1.13,0.99-3.24,2.18-4.67,2.65c-1.41,0.46-1.61,0.02-0.46-0.95 C13.71,8.92,15.74,7.77,17.14,7.3 M12.79,12.54c2.05-0.57,5-2.24,6.54-3.71c0.78-0.74,1.04-1.28,0.83-1.55 c-1.46-2.4-4.35-3.39-6.74-2.37c0.04-0.13,0.06-0.26,0.06-0.4c0-0.83-0.67-1.5-1.5-1.5s-1.5,0.67-1.5,1.5 c0,0.74,0.53,1.35,1.23,1.47l-6.98,6.69C4.58,12.8,4.5,12.98,4.5,13.18c0,0.2,0.07,0.38,0.21,0.52l4.45,4.45 C8.75,18.21,8.35,18.28,8,18.38c-0.73,0.21-1.14,0.47-1.25,0.74c-0.02,0.04-0.03,0.09-0.03,0.14v0.47c0,0.05,0.01,0.09,0.03,0.14 c0.11,0.28,0.55,0.55,1.33,0.77c1.74,0.48,4.54,0.48,6.29,0c0.77-0.21,1.22-0.48,1.33-0.77c0.02-0.05,0.03-0.09,0.03-0.14v-0.47 c0-0.05-0.01-0.1-0.03-0.14c-0.11-0.27-0.52-0.53-1.25-0.74c-0.93-0.27-2.16-0.39-3.38-0.38L6.25,13.2l4.11-3.94 c-0.09,1.05,0.12,2.16,0.66,3.18C11.14,12.77,11.73,12.82,12.79,12.54\" /> </g>",
+                    "hue-double-spot": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M21.69,17.42c-0.5,1.38-1.52,2.28-2.28,2.02c-0.76-0.26-0.98-1.59-0.48-2.98c0.5-1.38,1.52-2.28,2.28-2.02 C21.97,14.71,22.18,16.04,21.69,17.42 M3.96,15.55c-0.49,0.17-1.14-0.41-1.46-1.3c-0.32-0.89-0.18-1.74,0.3-1.91 c0.49-0.17,1.14,0.41,1.46,1.3C4.58,14.52,4.45,15.38,3.96,15.55 M22.09,13.44l-7.29-2.39V6.89c1-0.1,1.93-0.24,2.75-0.42 c1.49-0.34,2.33-0.75,2.55-1.19c0.04-0.07,0.06-0.15,0.06-0.22V4.51c0-0.08-0.02-0.15-0.06-0.22c-0.22-0.45-1.14-0.88-2.71-1.22 c-3.56-0.77-9.27-0.77-12.82,0C2.98,3.4,2.08,3.83,1.85,4.28C1.81,4.36,1.8,4.43,1.8,4.51v0.55c0,0.08,0.02,0.15,0.06,0.22 C2.07,5.71,2.91,6.13,4.4,6.46c0.81,0.18,1.75,0.32,2.74,0.42v2.66l-5.28,1.77c-0.86,0.3-1.1,1.8-0.54,3.36 c0.56,1.56,1.71,2.58,2.57,2.28l5.76-2.65c0.65-0.25,0.74-1.54,0.2-2.87c-0.28-0.7-0.73-1.29-1.18-1.66V7.01 c1.51,0.08,3.08,0.09,4.59,0v4.23c-0.68,0.45-1.39,1.31-1.83,2.35c-0.72,1.73-0.6,3.41,0.27,3.74l7.67,3.45 c1.14,0.39,2.68-0.94,3.42-2.97C23.56,15.78,23.23,13.82,22.09,13.44\" /> </g>",
+                    "hue-downstairs": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M22.97,10.54L12.75,1.29c-0.36-0.37-0.95-0.37-1.32-0.01c0,0,0,0-0.01,0.01L1.19,10.54 c-0.42,0.3-0.53,0.88-0.23,1.3c0.2,0.29,0.55,0.44,0.89,0.39h1.82v10.27c0,0.52,0.42,0.93,0.93,0.93h14.94 c0.52,0,0.93-0.42,0.93-0.93l0,0V12.23h1.87c0.51,0.04,0.96-0.34,1-0.86C23.38,11.05,23.24,10.73,22.97,10.54z M18.62,21.57H5.55 V16.9h13.07L18.62,21.57z\" /> </g>",
+                    "hue-floor-lantern": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M13.89,9.73c-1.07-0.37-2.71-0.37-3.78,0L9.2,3.46c1.78,0.22,3.82,0.22,5.6,0L13.89,9.73z M16.83,0.55 c-2.66-0.73-7.02-0.73-9.67,0C4.55,1.27,4.63,2.42,7.29,3.12C7.4,3.15,7.53,3.17,7.64,3.2l1.18,8.12c0.09,0.32,0.58,0.7,1.68,0.9 v8.97c-0.73,0.12-1.27,0.31-1.44,0.55C9.02,21.8,9,21.86,9,21.91v0.54c0,0.45,1.34,0.82,3,0.82s3-0.37,3-0.82v-0.54 c0-0.3-0.61-0.56-1.5-0.71v-8.98c1.09-0.2,1.56-0.59,1.68-0.9l1.18-8.13c0.12-0.03,0.25-0.05,0.36-0.08 C19.37,2.42,19.45,1.27,16.83,0.55z\" /> </g>",
+                    "hue-floor-shade": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M9.31,1.73c1.48-0.3,3.89-0.3,5.37,0c1.45,0.3,1.41,0.77-0.06,1.06c-1.45,0.28-3.79,0.28-5.24,0 C7.91,2.5,7.86,2.02,9.31,1.73 M15.67,9.32c0.9-0.25,1.42-0.57,1.55-0.91c0.02-0.05,0.03-0.11,0.03-0.16V1.5 c0-0.06-0.01-0.11-0.03-0.17c-0.12-0.32-0.61-0.63-1.46-0.88c-2.06-0.6-5.45-0.6-7.52,0C7.39,0.7,6.91,1.01,6.78,1.33 C6.76,1.38,6.75,1.44,6.75,1.5v6.76c0,0.05,0.01,0.11,0.03,0.16c0.13,0.33,0.65,0.65,1.55,0.91c0.82,0.23,1.85,0.36,2.91,0.41v10.54 c-2.2,0.08-3.96,0.53-4.39,1.11c-0.07,0.09-0.11,0.18-0.11,0.28v0.94C6.75,23.37,9.1,24,12,24s5.25-0.63,5.25-1.41v-0.94 c0-0.71-1.96-1.29-4.5-1.39V9.73C13.82,9.69,14.84,9.55,15.67,9.32\" /> </g>",
+                    "hue-floor-spot": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M16.31,10.71c-0.89,0.32-2.1-0.77-2.68-2.43c-0.59-1.66-0.34-3.26,0.56-3.57c0.89-0.32,2.09,0.77,2.68,2.43 C17.46,8.8,17.21,10.4,16.31,10.71 M18.28,6.64c-0.88-2.43-2.67-4.02-4-3.56L5.37,7.22c-1.02,0.39-1.16,2.4-0.32,4.48 c0.84,2.08,2.57,3.56,3.59,3.17l1.12-0.41v2.81c-2.2,0.08-3.96,0.53-4.39,1.11c-0.07,0.09-0.11,0.19-0.11,0.28v0.94 c0,0.78,2.35,1.41,5.25,1.41s5.25-0.63,5.25-1.41v-0.94c0-0.71-1.96-1.29-4.5-1.39v-3.31l6.18-2.07 C18.78,11.42,19.15,9.07,18.28,6.64\" /> </g>",
+                    "hue-go": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M17.15,15.76c-2.89-2.04-6.85-6-8.9-8.9C6.18,3.92,6.81,3.12,9.73,5.15c2.96,2.05,7.07,6.17,9.12,9.13 C20.88,17.2,20.09,17.83,17.15,15.76 M19.88,14.02c-2.09-3.41-6.48-7.81-9.89-9.89C8.37,3.13,7.25,2.8,6.73,3.11 C4.49,4.93,3,7.97,3,11.08c0,3.09,1.41,5.85,3.63,7.67H6.38c-0.62,0-1.12,0.5-1.12,1.12c0,0.62,0.51,1.12,1.12,1.12h5.9 c0.07,0,0.14-0.01,0.21-0.02c0.14,0.01,0.28,0.02,0.43,0.02c3.07,0,6.16-1.53,7.97-3.72C21.2,16.75,20.86,15.63,19.88,14.02\" /> </g>",
+                    "hue-home": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M23.2,10.3L12.7,0.7c-0.4-0.4-1-0.4-1.4,0L0.8,10.3C0.1,10.9,0.6,12,1.5,12h1.9v10.6c0,0.5,0.4,1,1,1h8.7v-5.8 c0-0.5,0.4-1,1-1H16c0.5,0,1,0.4,1,1v5.8l0,0h2.9c0.5,0,1-0.4,1-1V12h1.9C23.4,12,23.9,10.9,23.2,10.3\" /> </g>",
+                    "hue-iris": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M19.2,13.75c-1.15-0.38-2.85-1.48-5.14-3.78c-1.84-1.84-3.29-3.88-3.76-5.12c-0.1-0.27,0.14-0.54,0.43-0.49 c0.29,0.05,0.69,0.18,1.2,0.42c1.39,0.64,2.66,1.48,4.25,3.07c1.59,1.59,2.43,2.86,3.07,4.25c0.25,0.52,0.37,0.93,0.42,1.22 C19.72,13.59,19.46,13.83,19.2,13.75 M16.53,16.88c-0.05,0.16-0.2,0.26-0.36,0.26c-0.04,0-0.08,0-0.11-0.02 c-1.03-0.34-2.32-1.17-3.77-2.44c-1.72,0.95-4.54,2.06-4.47,2.54c0.14,0.92-0.41,1.43-1.45,0.39c-1.04-1.04-0.53-1.59,0.39-1.45 c0.48,0.07,1.61-2.78,2.55-4.5C8.18,10.32,7.29,8.96,6.93,8C6.85,7.8,6.95,7.59,7.14,7.52c0.19-0.07,0.41,0.02,0.48,0.22 C8.1,9,9.57,11,11.3,12.73c2.53,2.53,4.11,3.4,4.99,3.68C16.48,16.47,16.59,16.68,16.53,16.88 M20.43,11.8 c-1.44-3.09-5.12-6.8-8.18-8.24C11,2.97,10.08,2.87,9.51,3.16C9.44,3.2,9.38,3.25,9.3,3.29c-0.75,0.5-1.48,1.08-2.16,1.75 c-4.23,4.22-5.9,9.4-1.73,13.57c4.12,4.11,9.36,2.5,13.59-1.72c0.67-0.67,1.24-1.39,1.73-2.12c0.03-0.05,0.06-0.09,0.09-0.14 C21.14,14.06,21.04,13.09,20.43,11.8\" /> </g>",
+                    "hue-lightstrip": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M6.33,12.5c0.41-0.09,0.8,0.17,0.89,0.58c0.09,0.4-0.17,0.8-0.57,0.89c-0.41,0.09-0.8-0.17-0.89-0.57 C5.67,12.99,5.93,12.59,6.33,12.5 M10,11.71c0.4-0.09,0.8,0.17,0.89,0.57c0.09,0.41-0.17,0.8-0.57,0.89 C9.91,13.26,9.51,13,9.42,12.6C9.33,12.2,9.59,11.8,10,11.71 M13.66,10.92c0.41-0.09,0.8,0.17,0.89,0.57 c0.09,0.41-0.17,0.8-0.57,0.89c-0.4,0.09-0.8-0.17-0.89-0.57C13,11.4,13.25,11,13.66,10.92 M17.32,10.12 c0.41-0.09,0.8,0.17,0.89,0.57c0.09,0.4-0.17,0.8-0.57,0.89c-0.41,0.09-0.8-0.17-0.89-0.57C16.66,10.61,16.92,10.21,17.32,10.12 M8,15.48l11.1-2.4c0.81-0.17,1.32-0.97,1.15-1.78c-0.42-1.94-2.33-3.17-4.26-2.75L4.89,10.95c-0.81,0.18-1.32,0.97-1.15,1.78 C4.16,14.66,6.07,15.9,8,15.48 M18.75,19.5c-0.41,0-0.75-0.34-0.75-0.75S18.34,18,18.75,18s0.75,0.34,0.75,0.75 S19.16,19.5,18.75,19.5 M15,19.5c-0.41,0-0.75-0.34-0.75-0.75S14.59,18,15,18s0.75,0.34,0.75,0.75S15.41,19.5,15,19.5 M11.25,19.5 c-0.41,0-0.75-0.34-0.75-0.75S10.84,18,11.25,18S12,18.34,12,18.75S11.66,19.5,11.25,19.5 M7.5,19.5c-0.41,0-0.75-0.34-0.75-0.75 S7.09,18,7.5,18s0.75,0.34,0.75,0.75S7.91,19.5,7.5,19.5 M20.25,16.5H6.75c-3,0-3.75-2.25-3.75-3v3.75C3,19.32,4.68,21,6.75,21h13.5 c0.41,0,0.75-0.34,0.75-0.75v-3C21,16.84,20.66,16.5,20.25,16.5 M16.5,6c-0.41,0-0.75-0.34-0.75-0.75S16.09,4.5,16.5,4.5 s0.75,0.34,0.75,0.75S16.91,6,16.5,6 M12.75,6C12.34,6,12,5.66,12,5.25s0.34-0.75,0.75-0.75s0.75,0.34,0.75,0.75S13.16,6,12.75,6 M9,6C8.59,6,8.25,5.66,8.25,5.25S8.59,4.5,9,4.5s0.75,0.34,0.75,0.75S9.41,6,9,6 M5.25,6C4.84,6,4.5,5.66,4.5,5.25 S4.84,4.5,5.25,4.5S6,4.84,6,5.25S5.66,6,5.25,6 M17.25,3H3.75C3.34,3,3,3.34,3,3.75v3C3,7.16,3.34,7.5,3.75,7.5h13.5 c3,0,3.75,2.25,3.75,3V6.75C21,4.68,19.32,3,17.25,3\" /> </g>",
+                    "hue-pendant-long": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M20.64,13.02L6.62,17.73c-0.15,0.05-0.32,0.05-0.47-0.01l-2.77-1.05c-0.19-0.07-0.18-0.34,0.01-0.4l14.02-4.71 c0.15-0.05,0.32-0.05,0.47,0.01l2.77,1.05C20.84,12.69,20.83,12.96,20.64,13.02 M22.84,9.18l-4.96-1.87 c-0.15-0.06-0.32-0.06-0.47-0.01l-4.7,1.58V4.97v-0.2c0-0.18-0.32-0.33-0.71-0.33c-0.39,0-0.71,0.15-0.71,0.33v0.2v4.38L1.19,12.75 c-0.29,0.1-0.48,0.37-0.48,0.67v3.26c0,0.3,0.18,0.56,0.46,0.66l4.96,1.87c0.15,0.06,0.32,0.06,0.47,0.01l16.22-5.45 c0.29-0.1,0.48-0.37,0.48-0.67V9.85C23.29,9.55,23.11,9.29,22.84,9.18\" /> </g>",
+                    "hue-pendant-round": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18.57,18.08c-3.62,0.91-9.57,0.91-13.2,0c-3.58-0.9-3.47-2.32,0.16-3.19c3.57-0.85,9.3-0.85,12.87,0 C22.03,15.76,22.14,17.18,18.57,18.08 M22.96,10.65c-0.27-0.68-1.37-1.32-3.27-1.84c-1.91-0.51-4.33-0.8-6.8-0.85V4.12V3.86 c0-0.23-0.41-0.42-0.92-0.42s-0.92,0.19-0.92,0.42v0.25v3.84C8.57,8.02,6.15,8.3,4.24,8.81c-1.9,0.51-2.99,1.16-3.26,1.84 c-0.05,0.11-0.07,0.22-0.07,0.34v6.53c0,0.11,0.02,0.23,0.07,0.34c0.26,0.65,1.28,1.28,3.08,1.78c4.35,1.22,11.49,1.22,15.84,0 c1.79-0.51,2.81-1.13,3.07-1.78c0.05-0.11,0.07-0.22,0.07-0.34v-6.53C23.03,10.87,23.01,10.77,22.96,10.65\" /> </g>",
+                    "hue-play-bar": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M21.73,14.5c-1.6,0.79-3.17,0.2-4.22-0.21C16.65,13.95,2.16,7.97,2.16,7.97s-1.34-0.6,0.12-1.13 c1.8-0.66,3.25-0.11,4.93,0.56c1.06,0.43,14.13,5.67,14.13,5.67S23.33,13.71,21.73,14.5z M23.24,13.83 c-0.01-0.36-0.2-1.01-1.27-1.45L6.51,6.17C5.85,5.9,4.83,5.74,3.83,5.74c-0.51,0-1.25,0.05-1.84,0.27c-1.04,0.4-1.25,1-1.27,1.35 l-0.01,0l-0.01,4.27l0,0c0.02,0.34,0.21,0.89,1.1,1.27l15.88,6.53c0.6,0.25,1.38,0.4,2.21,0.4c0.83,0,1.61-0.14,2.2-0.4 c1.02-0.45,1.16-1.1,1.16-1.45L23.24,13.83L23.24,13.83z\" /> </g>",
+                    "hue-recessed-ceiling": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M12,8.25c-2.57,0-5.03,0.46-6.9,1.3c-0.9,0.4-1.58,0.85-2.09,1.3C2.95,9.78,3.85,8.7,5.7,7.89 c3.5-1.52,9.09-1.52,12.59,0c1.86,0.8,2.76,1.89,2.71,2.96c-0.51-0.45-1.19-0.9-2.1-1.3C17.02,8.71,14.57,8.25,12,8.25z M18.29,10.17c3.54,1.58,3.66,4.19,0.17,5.83c-3.54,1.66-9.35,1.66-12.89,0c-3.49-1.64-3.39-4.25,0.15-5.83 C9.21,8.61,14.8,8.61,18.29,10.17z M16.84,15.18c2.62-0.75,2.53-1.93-0.12-2.65c-2.62-0.71-6.81-0.71-9.43,0 c-2.65,0.72-2.73,1.91-0.11,2.65C9.84,15.94,14.19,15.94,16.84,15.18z\" /> </g>",
+                    "hue-recessed-floor": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M12.02,15.75c2.57,0,5.02-0.46,6.9-1.3c0.9-0.4,1.58-0.85,2.09-1.3c0.05,1.07-0.85,2.16-2.7,2.96 c-3.49,1.52-9.09,1.52-12.58,0c-1.86-0.8-2.77-1.89-2.71-2.96c0.52,0.45,1.19,0.9,2.1,1.3C6.99,15.29,9.44,15.75,12.02,15.75z M5.72,13.83C2.18,12.25,2.07,9.64,5.55,8c3.54-1.66,9.34-1.66,12.89,0c3.49,1.64,3.38,4.25-0.15,5.84 C14.8,15.39,9.21,15.39,5.72,13.83z M7.16,8.82c-2.61,0.75-2.53,1.93,0.12,2.65c2.62,0.71,6.81,0.71,9.43,0 c2.65-0.72,2.73-1.91,0.12-2.65C14.18,8.06,9.82,8.06,7.16,8.82z\" /> </g>",
+                    "hue-room-attic": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M12.42,7.78l6.56,9.05c0.38,0.51,0.02,1.24-0.6,1.24H5.61c-0.62,0-0.97-0.73-0.6-1.24l6.57-9.05 C11.79,7.48,12.21,7.48,12.42,7.78z M12,16.56c1.24,0,2.25-1.01,2.25-2.25s-1.01-2.25-2.25-2.25s-2.25,1.01-2.25,2.25 S10.76,16.56,12,16.56z M23.84,18.34c0.38,0.5,0.02,1.22-0.6,1.22h-0.03c-0.23,0-0.46-0.11-0.6-0.3l-0.92-1.23h0.01L20,15.75 l-6.91-9.2l-0.75-1c-0.18-0.23-0.52-0.23-0.7,0l-0.75,1L4,15.75l-1.71,2.28H2.3l-0.92,1.23c-0.14,0.19-0.36,0.3-0.6,0.3H0.75 c-0.62,0-0.98-0.72-0.6-1.22l0.93-1.25l1.71-2.28l6.91-9.2l1.09-1.46l0.68-0.9c0.26-0.35,0.79-0.35,1.05,0l0.68,0.9l1.09,1.46 l2.2,2.93V6.83c0-0.43,0.34-0.77,0.75-0.77h1.5c0.41,0,0.75,0.35,0.75,0.77v5.72l1.7,2.26l1.71,2.28L23.84,18.34z\" /> </g>",
+                    "hue-room-balcony": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18,9.21c-0.45,0.26-0.75,0.74-0.75,1.29s0.3,1.03,0.75,1.29v3.23c-0.06,0-0.12-0.02-0.18-0.02H15v-3.21 c0.45-0.26,0.75-0.73,0.75-1.29S15.45,9.47,15,9.21V6h3V9.21z M6,15.02v-3.23c0.45-0.26,0.75-0.73,0.75-1.29S6.45,9.47,6,9.21V6h3 v3.21C8.55,9.47,8.25,9.95,8.25,10.5s0.3,1.03,0.75,1.29V15H6.18C6.12,15,6.06,15.02,6,15.02z M13.5,9.21 c-0.45,0.26-0.75,0.74-0.75,1.29s0.3,1.03,0.75,1.29V15h-3v-3.21c0.45-0.26,0.75-0.73,0.75-1.29s-0.3-1.03-0.75-1.29V6h3V9.21z M21.75,4.5H2.25C1.84,4.5,1.5,4.84,1.5,5.25C1.5,5.66,1.84,6,2.25,6H4.5v3.21C4.05,9.47,3.75,9.95,3.75,10.5s0.3,1.03,0.75,1.29 v3.7C3.6,16.05,3,17.05,3,18.18c0,0.73,0.59,1.32,1.32,1.32h15.37c0.73,0,1.32-0.59,1.32-1.32c0-1.14-0.6-2.13-1.5-2.69v-3.7 c0.45-0.26,0.75-0.73,0.75-1.29s-0.3-1.03-0.75-1.29V6h2.25c0.41,0,0.75-0.34,0.75-0.75C22.5,4.84,22.16,4.5,21.75,4.5z\" /> </g>",
+                    "hue-room-bathroom": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M20.02,12.75H19.5V3.86C19.5,1.73,17.77,0,15.64,0c-1.83,0-3.36,1.29-3.75,3H10.5C9.68,3,9,3.67,9,4.5 c0,0.41,0.34,0.75,0.75,0.75H15c0.41,0,0.75-0.33,0.75-0.75c0-0.83-0.67-1.5-1.5-1.5h-0.79c0.34-0.88,1.19-1.5,2.19-1.5 c1.3,0,2.36,1.06,2.36,2.36v8.89H3.98C3.44,12.75,3,13.19,3,13.73c0,0.55,0.44,0.99,0.98,0.99H4.5v1.67c0,2.11,1.23,3.93,3,4.8v1.3 C7.5,23.33,8.17,24,9,24s1.5-0.67,1.5-1.5v-0.75h3.64c0.04,0,0.07,0,0.11,0v0.75c0,0.83,0.67,1.5,1.5,1.5s1.5-0.67,1.5-1.5v-1.75 c1.36-0.97,2.25-2.56,2.25-4.36v-1.67h0.52c0.54,0,0.98-0.44,0.98-0.99C21,13.19,20.56,12.75,20.02,12.75\" /> </g>",
+                    "hue-room-bbq": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M9.22,16.5l0.39-1.18c0.75,0.27,1.54,0.43,2.37,0.43c0.98,0,1.91-0.21,2.77-0.58l0.45,1.33H9.22z M20.25,9 C20.66,9,21,9.34,21,9.75s-0.34,0.75-0.75,0.75h-1.27c-0.57,1.61-1.6,2.98-2.91,3.91L17.29,18c0.81,0.02,1.46,0.68,1.46,1.5 c0,0.83-0.67,1.5-1.5,1.5s-1.5-0.67-1.5-1.5c0-0.27,0.08-0.53,0.21-0.75L15.7,18H8.71l-0.84,2.49C7.77,20.8,7.48,21,7.17,21 c-0.08,0-0.16-0.01-0.24-0.04c-0.39-0.13-0.6-0.56-0.47-0.95l1.8-5.36c-1.48-0.93-2.65-2.39-3.28-4.16H3.75 C3.34,10.5,3,10.16,3,9.75S3.34,9,3.75,9h0.84C4.55,8.78,4.52,8.56,4.5,8.33C4.46,7.89,4.8,7.5,5.25,7.5h13.46 c0.45,0,0.79,0.39,0.75,0.83C19.44,8.56,19.41,8.78,19.37,9H20.25z M9.54,5.94C9.49,5.9,9,5.56,9,5.04c0-0.23,0.09-0.55,0.54-0.86 C9.7,4.09,9.75,4,9.75,3.96c0-0.08-0.12-0.21-0.21-0.27C9.37,3.57,9.32,3.34,9.44,3.17C9.51,3.06,9.63,3,9.75,3 c0.07,0,0.14,0.02,0.21,0.06c0.06,0.04,0.54,0.38,0.54,0.89c0,0.23-0.09,0.55-0.54,0.86C9.8,4.91,9.75,5,9.75,5.04 c0,0.08,0.12,0.21,0.21,0.28c0.17,0.11,0.21,0.34,0.1,0.52C9.95,6.01,9.71,6.05,9.54,5.94z M11.79,5.94 c-0.05-0.04-0.54-0.38-0.54-0.89c0-0.23,0.09-0.55,0.54-0.86C11.95,4.09,12,4,12,3.96c0-0.08-0.12-0.21-0.21-0.27 c-0.17-0.12-0.22-0.35-0.11-0.52C11.76,3.06,11.88,3,12,3c0.07,0,0.14,0.02,0.21,0.06c0.06,0.04,0.54,0.38,0.54,0.89 c0,0.23-0.09,0.55-0.54,0.86C12.05,4.91,12,5,12,5.04c0,0.08,0.12,0.21,0.21,0.27c0.17,0.11,0.21,0.34,0.1,0.52 C12.2,6.01,11.96,6.05,11.79,5.94z M14.04,5.94C13.99,5.9,13.5,5.56,13.5,5.04c0-0.23,0.09-0.55,0.54-0.86 c0.15-0.1,0.21-0.19,0.21-0.23c0-0.08-0.12-0.21-0.21-0.27c-0.17-0.12-0.22-0.35-0.11-0.52C14.01,3.06,14.13,3,14.25,3 c0.07,0,0.14,0.02,0.21,0.06C14.52,3.1,15,3.44,15,3.96c0,0.23-0.09,0.55-0.54,0.86C14.3,4.91,14.25,5,14.25,5.04 c0,0.08,0.12,0.21,0.21,0.28c0.17,0.11,0.21,0.34,0.1,0.52C14.45,6.01,14.21,6.05,14.04,5.94z\" /> </g>",
+                    "hue-room-bedroom": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M19.5,12h-15c-1.66,0-3,1.34-3,3v1.5c0,0.41,0.34,0.75,0.75,0.75H3V18c0,0.83,0.67,1.5,1.5,1.5S6,18.83,6,18 v-0.75h12V18c0,0.83,0.67,1.5,1.5,1.5S21,18.83,21,18v-0.75h0.75c0.41,0,0.75-0.34,0.75-0.75V15C22.5,13.34,21.16,12,19.5,12 M6.75,7.5h3.75c0.41,0,0.75,0.34,0.75,0.75C11.25,8.66,10.91,9,10.5,9H6.75C6.34,9,6,8.66,6,8.25C6,7.84,6.34,7.5,6.75,7.5 M13.5,7.5h3.75C17.66,7.5,18,7.84,18,8.25C18,8.66,17.66,9,17.25,9H13.5c-0.41,0-0.75-0.34-0.75-0.75 C12.75,7.84,13.09,7.5,13.5,7.5 M5.26,10.5h13.48c0.42,0,0.76-0.34,0.76-0.76V6c0-0.83-0.67-1.5-1.5-1.5H6C5.17,4.5,4.5,5.17,4.5,6 v3.74C4.5,10.16,4.84,10.5,5.26,10.5\" /> </g>",
+                    "hue-room-carport": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M19.07,13.23c0.26,0.12,0.43,0.39,0.43,0.68v4.06c0,0.41-0.34,0.75-0.75,0.75H18v1.14 c0,0.62-0.51,1.12-1.12,1.12h-0.75c-0.62,0-1.12-0.5-1.12-1.12v-1.14H9v1.12c0,0.62-0.51,1.12-1.12,1.12H7.12 c-0.62,0-1.12-0.5-1.12-1.12v-1.12H5.25c-0.41,0-0.75-0.34-0.75-0.75v-4.06c0-0.29,0.17-0.55,0.43-0.68l0.75-0.35 c0.2-0.1,0.35-0.27,0.4-0.49l1.12-4.34C7.3,7.72,7.6,7.49,7.94,7.49h8.12c0.34,0,0.64,0.23,0.73,0.56l1.12,4.34 c0.05,0.22,0.2,0.39,0.4,0.49L19.07,13.23z M16.88,16.5C17.5,16.5,18,16,18,15.38c0-0.62-0.5-1.12-1.12-1.12s-1.12,0.5-1.12,1.12 C15.75,16,16.25,16.5,16.88,16.5z M13.5,16.5c0.41,0,0.75-0.34,0.75-0.75c0-0.41-0.34-0.75-0.75-0.75h-3 c-0.41,0-0.75,0.34-0.75,0.75c0,0.41,0.34,0.75,0.75,0.75H13.5z M7.12,14.25C6.5,14.25,6,14.75,6,15.38c0,0.62,0.5,1.12,1.12,1.12 s1.12-0.5,1.12-1.12C8.25,14.75,7.75,14.25,7.12,14.25z M7.53,11.8c-0.14,0.47,0.24,0.94,0.77,0.94h7.41c0.52,0,0.9-0.47,0.77-0.94 l-0.64-2.25C15.73,9.23,15.42,9,15.07,9H8.93C8.58,9,8.27,9.23,8.17,9.55L7.53,11.8z M23.25,3C23.66,3,24,3.34,24,3.75v16.5 c0,0.41-0.34,0.75-0.75,0.75s-0.75-0.34-0.75-0.75V6.75C22.5,6.34,22.16,6,21.75,6H2.25C1.84,6,1.5,6.34,1.5,6.75v13.5 C1.5,20.66,1.16,21,0.75,21S0,20.66,0,20.25V3.75C0,3.34,0.34,3,0.75,3H23.25z\" /> </g>",
+                    "hue-room-closet": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18,6.75h-3c-0.41,0-0.75-0.34-0.75-0.75S14.59,5.25,15,5.25h3c0.41,0,0.75,0.34,0.75,0.75S18.41,6.75,18,6.75z M18,11.25h-3c-0.41,0-0.75-0.34-0.75-0.75S14.59,9.75,15,9.75h3c0.41,0,0.75,0.34,0.75,0.75S18.41,11.25,18,11.25z M18,15.75h-3 c-0.41,0-0.75-0.34-0.75-0.75s0.34-0.75,0.75-0.75h3c0.41,0,0.75,0.34,0.75,0.75S18.41,15.75,18,15.75z M12.75,17.25 c0,0.41-0.34,0.75-0.75,0.75s-0.75-0.34-0.75-0.75V3.75C11.25,3.34,11.59,3,12,3s0.75,0.34,0.75,0.75V17.25z M9,11.25H7.5 c-0.41,0-0.75-0.34-0.75-0.75S7.09,9.75,7.5,9.75H9c0.41,0,0.75,0.34,0.75,0.75S9.41,11.25,9,11.25z M19.5,0.75h-15 c-0.41,0-0.75,0.34-0.75,0.75v18c0,0.41,0.34,0.75,0.75,0.75h0.75V21c0,0.41,0.34,0.75,0.75,0.75S6.75,21.41,6.75,21v-0.75h10.5V21 c0,0.41,0.34,0.75,0.75,0.75s0.75-0.34,0.75-0.75v-0.75h0.75c0.41,0,0.75-0.34,0.75-0.75v-18C20.25,1.09,19.91,0.75,19.5,0.75z\" /> </g>",
+                    "hue-room-computer": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M21.75,3.75c0.41,0,0.75,0.34,0.75,0.75v8.25h-21V4.5c0-0.41,0.34-0.75,0.75-0.75H21.75z M1.5,15v-0.75h21V15 c0,0.41-0.34,0.75-0.75,0.75h-9v3h1.5c0.41,0,0.75,0.34,0.75,0.75s-0.34,0.75-0.75,0.75h-4.5C9.34,20.25,9,19.91,9,19.5 s0.34-0.75,0.75-0.75h1.5v-3h-9C1.84,15.75,1.5,15.41,1.5,15z\" /> </g>",
+                    "hue-room-dining": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18,2.25c0.82,0,1.5,0.68,1.5,1.5v16.5c0,0.82-0.68,1.5-1.5,1.5s-1.5-0.68-1.5-1.5v-8.06 c-1.2-0.86-2.25-2.63-2.25-4.69c0-2.82,1.98-5.12,3.62-5.24C17.91,2.26,17.95,2.25,18,2.25z M10.5,13.34v6.91 c0,0.83-0.67,1.5-1.5,1.5s-1.5-0.67-1.5-1.5v-6.91c0-0.38-0.14-0.75-0.41-1.03l-0.22-0.23C5.83,10.97,5.25,9.5,5.25,7.98V3 c0-0.41,0.34-0.75,0.75-0.75S6.75,2.59,6.75,3v3.75c0,0.41,0.34,0.75,0.75,0.75s0.75-0.34,0.75-0.75V3c0-0.41,0.34-0.75,0.75-0.75 S9.75,2.59,9.75,3v3.75c0,0.41,0.34,0.75,0.75,0.75s0.75-0.34,0.75-0.75V3c0-0.41,0.34-0.75,0.75-0.75S12.75,2.59,12.75,3v4.98 c0,1.52-0.58,2.99-1.62,4.11l-0.22,0.23C10.64,12.59,10.5,12.96,10.5,13.34z\" /> </g>",
+                    "hue-room-driveway": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18,15c-0.83,0-1.5-0.67-1.5-1.5S17.17,12,18,12s1.5,0.67,1.5,1.5S18.83,15,18,15z M16.33,9.75H7.67 c-0.61,0-1.05-0.56-0.89-1.14l0.75-2.7c0.11-0.39,0.47-0.66,0.89-0.66h7.15c0.42,0,0.78,0.27,0.89,0.66l0.75,2.7 C17.38,9.19,16.93,9.75,16.33,9.75z M15,13.95c0,0.58-0.48,1.05-1.07,1.05h-3.87C9.48,15,9,14.52,9,13.95V13.8 c0-0.58,0.48-1.05,1.07-1.05h3.87c0.59,0,1.07,0.48,1.07,1.05V13.95z M6,15c-0.83,0-1.5-0.67-1.5-1.5S5.17,12,6,12s1.5,0.67,1.5,1.5 S6.83,15,6,15z M20.48,10.74l-0.9-0.43c-0.24-0.12-0.42-0.34-0.49-0.6l-1.35-5.28c-0.1-0.4-0.46-0.68-0.87-0.68H7.12 c-0.41,0-0.77,0.28-0.87,0.68L4.91,9.71c-0.07,0.26-0.25,0.48-0.49,0.6l-0.9,0.43C3.2,10.89,3,11.21,3,11.56v4.78 c0,0.5,0.4,0.91,0.9,0.91h1.35v1.63c0,0.75,0.62,1.37,1.37,1.37h1.01c0.75,0,1.37-0.62,1.37-1.37v-1.63h6v1.63 c0,0.75,0.62,1.37,1.37,1.37h1.01c0.75,0,1.37-0.62,1.37-1.37v-1.63h1.35c0.5,0,0.9-0.41,0.9-0.91v-4.78 C21,11.21,20.8,10.89,20.48,10.74z\" /> </g>",
+                    "hue-room-front-door": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M15.75,15c0,0.41-0.34,0.75-0.75,0.75H9c-0.41,0-0.75-0.34-0.75-0.75S8.59,14.25,9,14.25h6 C15.41,14.25,15.75,14.59,15.75,15z M8.25,4.5c0-0.41,0.34-0.75,0.75-0.75h1.5c0.41,0,0.75,0.34,0.75,0.75V9 c0,0.41-0.34,0.75-0.75,0.75H9C8.59,9.75,8.25,9.41,8.25,9V4.5z M7.5,12.75c-0.41,0-0.75-0.34-0.75-0.75s0.34-0.75,0.75-0.75 S8.25,11.59,8.25,12S7.91,12.75,7.5,12.75z M12.75,4.5c0-0.41,0.34-0.75,0.75-0.75H15c0.41,0,0.75,0.34,0.75,0.75V9 c0,0.41-0.34,0.75-0.75,0.75h-1.5c-0.41,0-0.75-0.34-0.75-0.75V4.5z M18,0.75H6c-0.41,0-0.75,0.34-0.75,0.75v21 c0,0.41,0.34,0.75,0.75,0.75h12c0.41,0,0.75-0.34,0.75-0.75v-21C18.75,1.09,18.41,0.75,18,0.75z\" /> </g>",
+                    "hue-room-garage": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M20.84,4.3c0.22,0.22,0.22,0.6,0,0.92l-3.38,4.84c-0.3,0.43-0.87,0.55-1.17,0.25l-0.71-0.7l-0.81,0.81 L13.6,9.25l0.81-0.81l-0.7-0.71c-0.3-0.3-0.18-0.87,0.25-1.17l4.84-3.38c0.32-0.22,0.7-0.22,0.92,0L20.84,4.3z M8.66,13.01L11,15.36 l-5.4,5.4c-0.32,0.32-0.85,0.32-1.18,0l-1.17-1.17c-0.32-0.32-0.32-0.85,0-1.18L8.66,13.01z M20.74,18.51 c0.32,0.32,0.32,0.85,0,1.18l-1.06,1.06c-0.16,0.16-0.38,0.24-0.59,0.24c-0.21,0-0.43-0.08-0.59-0.24L8.39,10.62 c-1.21,0.47-2.62,0.33-3.7-0.43C3.32,9.22,2.79,7.62,3.08,6.16c0.06-0.3,0.45-0.41,0.66-0.19L5.27,7.5c0.31,0.31,0.81,0.31,1.12,0 L7.5,6.39c0.31-0.31,0.31-0.81,0-1.12L5.98,3.74c-0.22-0.22-0.11-0.61,0.2-0.66c1.25-0.25,2.6,0.11,3.57,1.07 c1.14,1.14,1.43,2.82,0.88,4.23L20.74,18.51z\" /> </g>",
+                    "hue-room-guestroom": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18,12H6c-1.66,0-3,1.34-3,3v1.5c0,0.41,0.34,0.75,0.75,0.75H4.5V18c0,0.83,0.67,1.5,1.5,1.5s1.5-0.67,1.5-1.5 v-0.75h9V18c0,0.83,0.67,1.5,1.5,1.5s1.5-0.67,1.5-1.5v-0.75h0.75c0.41,0,0.75-0.34,0.75-0.75V15C21,13.34,19.66,12,18,12 M9.08,7.5 h5.83c0.46,0,0.84,0.34,0.84,0.75c0,0.41-0.37,0.75-0.84,0.75H9.08C8.62,9,8.25,8.66,8.25,8.25C8.25,7.84,8.62,7.5,9.08,7.5 M6.75,10.5h10.5c0.41,0,0.75-0.34,0.75-0.75v-4.5c0-0.41-0.34-0.75-0.75-0.75H6.75C6.34,4.5,6,4.84,6,5.25v4.5 C6,10.16,6.34,10.5,6.75,10.5\" /> </g>",
+                    "hue-room-gym": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M17.25,6.75C17.66,6.75,18,7.09,18,7.5v9c0,0.41-0.34,0.75-0.75,0.75h-3c-0.41,0-0.75-0.34-0.75-0.75v-2.25h-3 v2.25c0,0.41-0.34,0.75-0.75,0.75h-3C6.34,17.25,6,16.91,6,16.5v-9c0-0.41,0.34-0.75,0.75-0.75h3c0.41,0,0.75,0.34,0.75,0.75v2.25h3 V7.5c0-0.41,0.34-0.75,0.75-0.75H17.25z M3,9c0-0.41,0.34-0.75,0.75-0.75H4.5v7.5H3.75C3.34,15.75,3,15.41,3,15v-1.5 c-0.83,0-1.5-0.67-1.5-1.5s0.67-1.5,1.5-1.5V9z M21,10.5c0.83,0,1.5,0.67,1.5,1.5s-0.67,1.5-1.5,1.5V15c0,0.41-0.34,0.75-0.75,0.75 H19.5v-7.5h0.75C20.66,8.25,21,8.59,21,9V10.5z\" /> </g>",
+                    "hue-room-hallway": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M20.98,16.37l-2.16-9.58c-0.34-1.51-1.79-2.46-3.29-2.24l-0.59-0.88C14.67,3.25,14.2,3,13.7,3h-0.95 C12.34,3,12,3.34,12,3.75v1.5h-1.5v-4.5C10.5,0.34,10.16,0,9.75,0S9,0.34,9,0.75V9H6V7.5c0-0.41-0.34-0.75-0.75-0.75 S4.5,7.09,4.5,7.5v2.25c0,0.41,0.34,0.75,0.75,0.75H9v11.25H6c-0.83,0-1.5,0.67-1.5,1.5C4.5,23.66,4.84,24,5.25,24h9 c0.41,0,0.75-0.34,0.75-0.75c0-0.83-0.67-1.5-1.5-1.5h-3v-15H12v12c0,0.41,0.34,0.75,0.75,0.75h1c1.55,0,2.71-1.42,2.41-2.94 L15.25,12l0.83-3.73l1.97,8.76c0.09,0.4,0.49,0.66,0.9,0.57l1.46-0.33C20.82,17.17,21.07,16.77,20.98,16.37\" /> </g>",
+                    "hue-room-kids": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M15.75,19.12c-0.83,0-1.5-0.84-1.5-1.88s0.67-1.88,1.5-1.88s1.5,0.84,1.5,1.88S16.58,19.12,15.75,19.12 M12,11.25c-1.24,0-2.25-0.84-2.25-1.88S10.76,7.5,12,7.5s2.25,0.84,2.25,1.88S13.24,11.25,12,11.25 M8.25,19.12 c-0.83,0-1.5-0.84-1.5-1.88s0.67-1.88,1.5-1.88s1.5,0.84,1.5,1.88S9.08,19.12,8.25,19.12z M12,8.25c0.41,0,0.75,0.34,0.75,0.75 S12.41,9.75,12,9.75S11.25,9.41,11.25,9S11.59,8.25,12,8.25z M18.75,12c-0.32,0-0.63,0.07-0.91,0.2c-0.48-0.61-1.14-1.12-1.91-1.53 c0.57-0.8,0.91-1.77,0.91-2.82c0-0.02,0-0.04,0-0.06c1.09-0.23,1.91-1.2,1.91-2.37c0-1.34-1.09-2.42-2.42-2.42 c-0.69,0-1.31,0.29-1.75,0.75C13.83,3.28,12.95,3,12,3c-0.95,0-1.83,0.28-2.58,0.75C8.98,3.29,8.36,3,7.67,3 C6.34,3,5.25,4.09,5.25,5.42c0,1.16,0.82,2.12,1.9,2.36c0,0.02,0,0.04,0,0.06c0,1.05,0.34,2.03,0.91,2.82 c-0.77,0.4-1.43,0.92-1.91,1.52C5.88,12.07,5.57,12,5.25,12C4.01,12,3,13.01,3,14.25s1.01,2.25,2.25,2.25 c0.02,0,0.04-0.01,0.06-0.01c-0.04,0.25-0.06,0.5-0.06,0.76c0,2.07,1.34,3.75,3,3.75c1.01,0,1.9-0.63,2.45-1.59 c0.42,0.06,0.86,0.09,1.3,0.09s0.88-0.03,1.3-0.09c0.55,0.96,1.44,1.59,2.45,1.59c1.66,0,3-1.68,3-3.75c0-0.26-0.02-0.51-0.06-0.76 c0.02,0,0.04,0.01,0.06,0.01c1.24,0,2.25-1.01,2.25-2.25S19.99,12,18.75,12\" /> </g>",
+                    "hue-room-kitchen": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M17.62,5.25c0.62,0,1.12,0.5,1.12,1.12s-0.5,1.12-1.12,1.12H6.38C5.75,7.5,5.25,7,5.25,6.38s0.5-1.12,1.12-1.12 h4.33C10.58,5.03,10.5,4.77,10.5,4.5C10.5,3.67,11.17,3,12,3s1.5,0.67,1.5,1.5c0,0.27-0.08,0.53-0.21,0.75H17.62z M19.5,9 c0.83,0,1.5,0.67,1.5,1.5S20.33,12,19.5,12h-0.75v7.41c0,0.88-0.71,1.59-1.59,1.59H6.84c-0.88,0-1.59-0.71-1.59-1.59V12H4.5 C3.67,12,3,11.33,3,10.5S3.67,9,4.5,9H19.5z\" /> </g>",
+                    "hue-room-laundry": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18.75,4.5C18.34,4.5,18,4.16,18,3.75S18.34,3,18.75,3s0.75,0.34,0.75,0.75S19.16,4.5,18.75,4.5 M12,19.5 c-3.31,0-6-2.69-6-6s2.69-6,6-6s6,2.69,6,6S15.31,19.5,12,19.5 M4.5,3.75C4.5,3.34,4.84,3,5.25,3h3C8.66,3,9,3.34,9,3.75 S8.66,4.5,8.25,4.5h-3C4.84,4.5,4.5,4.16,4.5,3.75 M15.75,3c0.41,0,0.75,0.34,0.75,0.75S16.16,4.5,15.75,4.5 C15.34,4.5,15,4.16,15,3.75S15.34,3,15.75,3z M16.5,12.02c-0.74,0.12-1.29,0.73-1.29,1.48s0.55,1.36,1.29,1.48 C15.87,16.73,14.15,18,12.13,18c-2.55,0-4.63-2.02-4.63-4.5S9.58,9,12.13,9C14.15,9,15.87,10.27,16.5,12.02z M20.25,1.5H3.75 C3.34,1.5,3,1.84,3,2.25v19.5c0,0.41,0.34,0.75,0.75,0.75h16.5c0.41,0,0.75-0.34,0.75-0.75V2.25C21,1.84,20.66,1.5,20.25,1.5\" /> </g>",
+                    "hue-room-living": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M21,9.75c0.83,0,1.5,0.67,1.5,1.5v4.55c0,0.39-0.31,0.7-0.7,0.7H21v0.75c0,0.83-0.67,1.5-1.5,1.5 s-1.5-0.67-1.5-1.5V16.5H6v0.75c0,0.83-0.67,1.5-1.5,1.5S3,18.08,3,17.25V16.5H2.2c-0.39,0-0.7-0.31-0.7-0.7v-4.55 c0-0.83,0.67-1.5,1.5-1.5s1.5,0.67,1.5,1.5v1.5h15v-1.5C19.5,10.42,20.17,9.75,21,9.75z M6,11.25c0-1.66-1.34-3-3-3v-1.5 c0-0.83,0.67-1.5,1.5-1.5h15c0.83,0,1.5,0.67,1.5,1.5v1.5c-1.66,0-3,1.34-3,3H6z\" /> </g>",
+                    "hue-room-lounge": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18,12.75c2.48,0,4.5,0.52,4.5,3c0,0.41-0.34,0.75-0.75,0.75H21v0.75c0,0.83-0.67,1.5-1.5,1.5 s-1.5-0.67-1.5-1.5V16.5H6v0.75c0,0.83-0.67,1.5-1.5,1.5S3,18.08,3,17.25V16.5H2.25c-0.41,0-0.75-0.34-0.75-0.75 c0-0.04,0.01-0.08,0.01-0.12c0-0.02-0.01-0.04-0.01-0.06v-5.14C1.5,9.64,2.14,9,2.93,9h0.14C3.86,9,4.5,9.64,4.5,10.43v2.32H18z M3.07,7.5H2.93c-0.45,0-1.05,0.14-1.43,0.33c0.6-2.31,2.85-4.08,6.36-4.08c3.36,0,5.47,1.59,6.39,3.75h4.01 c1.51,0,2.74,1.23,2.74,2.74v0.33c0,0.38-0.3,0.68-0.68,0.68H6v-0.82C6,8.82,4.68,7.5,3.07,7.5z\" /> </g>",
+                    "hue-room-nursery": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M12.58,11.25c-0.73,0-1.33-0.6-1.33-1.33V9.75h2.67v0.17C13.91,10.65,13.32,11.25,12.58,11.25z M19.7,16.13 c0.28-0.31,0.76-0.32,1.06-0.04c0.3,0.28,0.32,0.76,0.04,1.06C18.54,19.6,15.33,21,12,21c-3.33,0-6.54-1.4-8.8-3.85 c-0.28-0.3-0.27-0.78,0.04-1.06c0.3-0.28,0.78-0.27,1.06,0.04c0.07,0.07,0.14,0.14,0.22,0.21l2.17-5.97 c-2.58,0.76-4.8-2.14-3.1-3.88c0.97-1-0.02-1.99-0.51-2.47C2.94,3.88,3,3.63,3.19,3.56c5.54-1.83,7.48,1.21,7.75,3.17 c0.11,0.79-0.25,1.84-0.44,2.3l-0.64,1.62c0.33,1.2,1.42,2.09,2.72,2.09c1.51,0,2.73-1.19,2.82-2.68c0.31,0.14,0.59,0.34,0.83,0.58 c0.92,0.04,1.85-0.29,2.55-0.99c0.49-0.49,0.8-1.1,0.93-1.73c0.11-0.56,0.92-0.59,1.11-0.05c0.5,1.47-0.21,2.62-0.52,3.02 c-0.07,0.09-0.15,0.18-0.23,0.25c-0.79,0.73-1.84,1.01-2.83,0.86c0.03,0.05,0.07,0.1,0.09,0.15l2.01,4.32v0 C19.46,16.36,19.59,16.25,19.7,16.13z M12,19.5c1.75,0,3.46-0.45,4.98-1.27c-0.15-0.13-0.27-0.29-0.36-0.48L15,14.24H8.47l-1.31,3.6 c-0.05,0.13-0.11,0.25-0.19,0.36C8.5,19.04,10.23,19.5,12,19.5z M6,7.48c0.42,0,0.75-0.34,0.75-0.75S6.42,5.98,6,5.98 c-0.41,0-0.75,0.34-0.75,0.75S5.59,7.48,6,7.48z\" /> </g>",
+                    "hue-room-office": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M19.88,10.5h-0.75c-0.62,0-1.12,0.51-1.12,1.12v2.33c0,0.33-0.27,0.6-0.6,0.6h-0.01 c-0.68-1.08-1.88-1.8-3.25-1.8h-1.39V10.5h2.32c1.21,0,2.18-0.98,2.18-2.18L16.3,0.93C16.22,0.4,15.76,0,15.21,0H8.79 c-0.54,0-1,0.4-1.08,0.93L6.75,8.32c0,1.21,0.98,2.18,2.18,2.18h2.32v2.25H9.86c-1.24,0-2.32,0.59-3.03,1.5H6.6 c-0.33,0-0.6-0.27-0.6-0.6v-2.18c0-0.7-0.57-1.27-1.28-1.27H4.28C3.57,10.2,3,10.77,3,11.47c0,0.7,0.57,1.28,1.28,1.28H4.5v0.9 c0,0.99,0.7,1.82,1.62,2.04C6.05,15.98,6,16.29,6,16.61c0,0.36,0.29,0.64,0.64,0.64h4.51l-3.27,3.81C7.77,21.02,7.64,21,7.5,21 C6.67,21,6,21.67,6,22.5S6.67,24,7.5,24S9,23.33,9,22.5c0-0.22-0.05-0.42-0.13-0.61l2.38-2.78v2.09c-0.45,0.26-0.75,0.74-0.75,1.29 c0,0.83,0.67,1.5,1.5,1.5s1.5-0.67,1.5-1.5c0-0.55-0.3-1.03-0.75-1.29v-2.09l2.38,2.78C15.05,22.08,15,22.28,15,22.5 c0,0.83,0.67,1.5,1.5,1.5s1.5-0.67,1.5-1.5S17.33,21,16.5,21c-0.14,0-0.27,0.02-0.39,0.06l-3.27-3.81h4.51 c0.36,0,0.64-0.29,0.64-0.64c0-0.21-0.03-0.43-0.06-0.63c0.89-0.24,1.56-1.05,1.56-2.02v-1.2h0.38c0.62,0,1.12-0.51,1.12-1.12 S20.49,10.5,19.88,10.5\" /> </g>",
+                    "hue-room-other": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18.86,2.05c0.37,0.05,0.64,0.38,0.64,0.75V21.2c0,0.38-0.27,0.7-0.64,0.75l-9,1.3C9.4,23.31,9,22.95,9,22.49 V21H5.29c-0.43,0-0.79-0.36-0.79-0.79V3.79C4.5,3.36,4.86,3,5.29,3H9V1.51c0-0.46,0.4-0.82,0.86-0.75L18.86,2.05z M11.25,12.75 c0.41,0,0.75-0.34,0.75-0.75s-0.34-0.75-0.75-0.75S10.5,11.59,10.5,12S10.84,12.75,11.25,12.75z M6,19.5h3v-15H6V19.5z\" /> </g>",
+                    "hue-room-pool": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M21,14.22L21,14.22l0,2.69c-0.09-0.07-0.17-0.13-0.22-0.18c-0.49-0.5-1.3-0.95-2.21-0.96c-0.01,0-0.02,0-0.02,0 c-0.09,0-0.18,0-0.28,0.01c-0.61,0.06-1.25,0.34-1.86,0.95c-1.02,1.03-1.97,0.25-2.24,0c-0.88-0.89-2.76-1.61-4.36,0 c-1.02,1.03-1.98,0.25-2.24,0c-0.5-0.5-1.31-0.95-2.21-0.96c-0.7-0.01-1.45,0.25-2.15,0.96C3.14,16.8,3.07,16.85,3,16.9v-2.68h0 c0-0.19,0.07-0.38,0.21-0.52c0.91-0.92,1.92-1.07,2.78-0.88V5.25C6,4.84,5.66,4.5,5.25,4.5S4.5,4.84,4.5,5.25S4.16,6,3.75,6 S3,5.66,3,5.25C3,4.01,4.01,3,5.25,3S7.5,4.01,7.5,5.25v1.5h5.25v-1.5c0-0.41-0.34-0.75-0.75-0.75s-0.75,0.34-0.75,0.75 S10.91,6,10.5,6S9.75,5.66,9.75,5.25C9.75,4.01,10.76,3,12,3s2.25,1.01,2.25,2.25v8.52c0.19,0.17,0.57,0.45,1.05,0.46h0.05 c0.32-0.01,0.69-0.14,1.06-0.52c1.6-1.61,3.48-0.88,4.36,0C20.92,13.85,20.99,14.04,21,14.22z M9.82,13.7 c0.97-0.97,2.04-1.09,2.93-0.84V12H7.5v1.63c0.03,0.03,0.05,0.05,0.08,0.07c0.16,0.16,0.58,0.51,1.12,0.52h0.05 C9.08,14.21,9.45,14.08,9.82,13.7z M7.5,10.5h5.25V8.25H7.5V10.5z M19.72,17.78C19.73,17.78,19.73,17.78,19.72,17.78 c0.07,0.07,0.55,0.53,1.28,0.79V21H3v-2.41c0.45-0.15,0.88-0.41,1.27-0.8c0,0,0.01,0,0.01-0.01c0.25-0.26,0.5-0.41,0.74-0.48 c0.71-0.21,1.3,0.28,1.5,0.48c0,0,0.01,0,0.01,0c0.07,0.07,0.57,0.55,1.31,0.8c1.08,0.37,2.16,0.08,3.04-0.81 c1.03-1.04,1.98-0.26,2.24,0c0.05,0.05,0.56,0.55,1.32,0.81c0.3,0.11,0.61,0.16,0.91,0.16c0.76,0,1.49-0.33,2.12-0.96c0,0,0,0,0,0 c0.13-0.13,0.25-0.23,0.38-0.31C18.73,16.92,19.49,17.55,19.72,17.78z\" /> </g>",
+                    "hue-room-porch": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M10.34,19.28l1.09-3.41l2.34-0.34l1.46,3.8C13.64,19.57,11.93,19.55,10.34,19.28z M8.12,11.3 c0.52-0.08,1.32-0.2,2.24-0.33l0.64,2.7l-2.21,0.33L8.12,11.3z M14.82,13.09l-2.33,0.35l-0.64-2.69c0.81-0.12,1.62-0.23,2.33-0.33 L14.82,13.09z M20.15,18.33c-0.21-0.36-0.66-0.48-1.02-0.28c-0.7,0.4-1.51,0.71-2.4,0.96l-1.43-3.71l4.21-0.62 c-0.18-1.23-1.31-2.08-2.54-1.91l-0.64,0.09l-0.64-2.65c0.15-0.02,0.27-0.04,0.38-0.05c0.43,0.01,0.77,0.36,0.77,0.78 c0,0.41,0.34,0.75,0.75,0.75s0.75-0.34,0.75-0.75c0-1.26-1.03-2.29-2.29-2.29c-0.01,0-0.02,0.01-0.04,0.01c-0.01,0-0.02,0-0.04,0 C14.66,8.8,9.36,9.6,7.76,9.84l-1.4-5.65C6.19,3.49,5.56,3,4.85,3h-1.1l3.33,13.5l2.7-0.39l-0.9,2.83 c-0.79-0.23-1.51-0.53-2.13-0.89c-0.36-0.2-0.82-0.08-1.02,0.28C5.51,18.69,5.64,19.15,6,19.36c0.91,0.52,1.97,0.93,3.15,1.21 c1.2,0.29,2.48,0.44,3.79,0.44s2.59-0.14,3.79-0.44c1.17-0.28,2.23-0.69,3.14-1.21C20.23,19.15,20.36,18.69,20.15,18.33z\" /> </g>",
+                    "hue-room-recreation": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18.75,16.5c1.24,0,2.25,1.01,2.25,2.25S19.99,21,18.75,21s-2.25-1.01-2.25-2.25S17.51,16.5,18.75,16.5z M19.76,15.16C19.44,15.06,19.1,15,18.75,15C16.68,15,15,16.68,15,18.75c-1.77,0.39-3.84,0.05-5.5-0.79 c-0.43-0.22-0.95-0.14-1.3,0.21l-2.62,2.61c-0.29,0.29-0.77,0.29-1.06,0l-1.31-1.3c-0.29-0.29-0.29-0.77,0-1.06l2.62-2.61 c0.34-0.34,0.43-0.85,0.21-1.27C4.34,11.2,5.16,6.9,8.52,4.48c2.8-2,6.46-1.98,9.23,0.06C21.26,7.12,21.92,11.78,19.76,15.16z\" /> </g>",
+                    "hue-room-stairs": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M20.25,21H8.56L21,8.56v11.69C21,20.66,20.66,21,20.25,21z M17.25,3H21v3.44L6.44,21H3v-3.75 c0-0.41,0.34-0.75,0.75-0.75H7.5v-3.75C7.5,12.34,7.84,12,8.25,12H12V8.25c0-0.41,0.34-0.75,0.75-0.75h3.75V3.75 C16.5,3.34,16.84,3,17.25,3z\" /> </g>",
+                    "hue-room-storage": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M3.75,19.5V8.25h16.5V19.5c0,0.41-0.34,0.75-0.75,0.75h-15C4.09,20.25,3.75,19.91,3.75,19.5z M9,11.25 c-0.41,0-0.75,0.34-0.75,0.75S8.59,12.75,9,12.75h6c0.41,0,0.75-0.34,0.75-0.75s-0.34-0.75-0.75-0.75H9z M19.5,3.75 c0.41,0,0.75,0.34,0.75,0.75v2.25H3.75V4.5c0-0.41,0.34-0.75,0.75-0.75H19.5z\" /> </g>",
+                    "hue-room-studio": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M18.75,4.5c0.41,0,0.75,0.34,0.75,0.75V12c0,0.41-0.34,0.75-0.75,0.75H5.25c-0.41,0-0.75-0.34-0.75-0.75V5.25 c0-0.41,0.34-0.75,0.75-0.75h6V3c0-0.41,0.34-0.75,0.75-0.75S12.75,2.59,12.75,3v1.5H18.75z M15.82,15.75l2.83,4.88 c0.21,0.36,0.09,0.82-0.27,1.02c-0.12,0.07-0.25,0.1-0.38,0.1c-0.26,0-0.51-0.13-0.65-0.38l-3.27-5.62h-1.34v5.21 c0,0.42-0.34,0.75-0.75,0.75s-0.75-0.33-0.75-0.75v-5.21H9.91l-3.27,5.62C6.51,21.62,6.26,21.75,6,21.75c-0.13,0-0.26-0.03-0.38-0.1 c-0.36-0.21-0.48-0.67-0.27-1.02l2.83-4.88H6.75C6.34,15.75,6,15.41,6,15s0.34-0.75,0.75-0.75h10.5c0.41,0,0.75,0.34,0.75,0.75 s-0.34,0.75-0.75,0.75H15.82z\" /> </g>",
+                    "hue-room-terrace": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M20.68,6.42c0.29,0.21,0.41,0.59,0.25,0.91c-0.24,0.5-0.77,0.89-1.37,0.89c-0.39,0-0.75-0.16-1.02-0.42 c-0.28-0.27-0.71-0.27-0.99,0c-0.27,0.25-0.62,0.42-1.02,0.42c-0.39,0-0.75-0.16-1.02-0.42c-0.28-0.27-0.71-0.27-0.99,0 c-0.27,0.25-0.62,0.42-1.02,0.42c-0.28,0-0.54-0.09-0.76-0.23v5.48c0,0.42-0.34,0.75-0.75,0.75s-0.75-0.33-0.75-0.75V8 c-0.22,0.14-0.48,0.23-0.77,0.23c-0.39,0-0.75-0.16-1.01-0.42c-0.28-0.27-0.72-0.27-1,0C8.21,8.06,7.85,8.23,7.46,8.23 c-0.39,0-0.75-0.16-1.02-0.42c-0.28-0.27-0.72-0.27-1,0C5.18,8.06,4.82,8.23,4.43,8.23c-0.6,0-1.12-0.39-1.37-0.89 c-0.15-0.32-0.03-0.7,0.25-0.91l8.23-6.27c0.27-0.2,0.64-0.2,0.91,0L20.68,6.42z M17.25,14.98c0.83,0,1.5,0.67,1.5,1.5 c0,0.83-0.67,1.5-1.5,1.5h-3.31l3.89,4.78c0.26,0.32,0.21,0.79-0.11,1.05c-0.14,0.11-0.3,0.17-0.47,0.17 c-0.21,0-0.43-0.09-0.58-0.27L12,17.98L7.33,23.7c-0.26,0.32-0.73,0.37-1.05,0.11c-0.32-0.26-0.37-0.73-0.11-1.05l3.9-4.78H6.75 c-0.83,0-1.5-0.67-1.5-1.5c0-0.83,0.67-1.5,1.5-1.5H17.25z\" /> </g>",
+                    "hue-room-toilet": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M6.75,14.25C6.34,14.25,6,13.91,6,13.5s0.34-0.75,0.75-0.75H9.6c-1.69-1.12-2.85-3.38-2.85-6 C6.75,3.02,9.1,0,12,0s5.25,3.02,5.25,6.75c0,2.62-1.16,4.88-2.85,6h2.85c0.41,0,0.75,0.34,0.75,0.75s-0.34,0.75-0.75,0.75H6.75z M17.4,15.75c0.33,0,0.6,0.26,0.6,0.58v0.16c0,2.46-1.57,4.36-3.8,5.21c-0.32,0.12-0.53,0.42-0.53,0.75v0.72 c0,0.45-0.38,0.81-0.84,0.81h-1.67c-0.46,0-0.84-0.36-0.84-0.81v-0.73c0-0.33-0.21-0.63-0.52-0.75C7.55,20.81,6,18.81,6,16.33 c0-0.32,0.27-0.58,0.6-0.58H17.4z\" /> </g>",
+                    "hue-single-spot": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M19.13,16.83c-0.58,1.67-1.77,2.77-2.66,2.45c-0.89-0.32-1.14-1.93-0.56-3.6c0.58-1.67,1.77-2.76,2.66-2.45 C19.46,13.55,19.71,15.16,19.13,16.83 M19.7,12.06L11.25,9.2V7.78c1.69-0.05,3.34-0.26,4.62-0.62c1.21-0.35,1.9-0.79,2.08-1.24 C17.99,5.84,18,5.76,18,5.68V5.11c0-0.08-0.01-0.15-0.05-0.23c-0.18-0.47-0.93-0.92-2.21-1.28c-2.91-0.8-7.57-0.8-10.48,0 C3.97,3.96,3.23,4.41,3.05,4.88C3.02,4.96,3,5.03,3,5.11v0.57c0,0.08,0.02,0.16,0.05,0.23C3.23,6.37,3.91,6.8,5.13,7.16 c1.29,0.37,2.93,0.58,4.62,0.62v1.43c-0.89,0.45-1.88,1.61-2.45,3.04c-0.84,2.09-0.7,4.11,0.31,4.51l8.94,4.16 c1.33,0.47,3.11-1.14,3.98-3.58S21.03,12.53,19.7,12.06\" /> </g>",
+                    "hue-table-shade": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M14.16,5.77c-1.18,0.3-3.12,0.3-4.3,0C8.7,5.47,8.73,4.99,9.91,4.71c1.16-0.29,3.03-0.29,4.19,0 C15.28,4.99,15.32,5.47,14.16,5.77 M18.71,11.2l-2.03-6.93L16.66,4.2c-0.19-0.43-1.11-0.85-2.75-1.07c-1.25-0.17-2.52-0.17-3.77,0 C8.51,3.35,7.59,3.76,7.41,4.2L7.37,4.31L5.29,11.2c-0.03,0.1-0.05,0.2-0.04,0.3c0.17,1.14,2.23,2.06,6,2.17v3.6 c-1.83,0.1-3.3,0.54-3.66,1.11c-0.06,0.09-0.09,0.19-0.09,0.28v0.94c0,0.78,2.02,1.41,4.5,1.41c2.48,0,4.5-0.63,4.5-1.41v-0.94 c0-0.7-1.62-1.27-3.75-1.39v-3.6c3.77-0.11,5.82-1.03,5.99-2.17C18.76,11.4,18.74,11.3,18.71,11.2\" /> </g>",
+                    "hue-table-wash": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M16.07,12.12c-1.2-0.98-2.3-2.1-3.26-3.33c-2.96-3.8-1.91-5.08,1.89-2.02c1.24,1,2.36,2.14,3.34,3.41 C21.04,14.07,19.8,15.15,16.07,12.12 M21,12.95c0-0.06,0-0.12,0-0.18c0-0.42-0.18-1-0.57-1.72c-1.27-2.39-4.23-5.42-6.57-6.72 c-0.66-0.37-1.19-0.55-1.59-0.57c-0.05-0.01-0.09-0.01-0.14,0C12.09,3.75,12.05,3.75,12,3.75c-3.38,0-9,5.75-9,9.2 c0,3.2,1.59,6.01,4.01,7.66C7.39,20.86,7.83,21,8.28,21h6.19c0.47,0,0.93-0.15,1.32-0.43C18.47,18.61,21,15.26,21,12.95\" /> </g>",
+                    "hue-upstairs": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M23.29,10.17L12.73,0.61c-0.38-0.38-0.99-0.38-1.36-0.01c0,0,0,0-0.01,0.01L0.81,10.17 c-0.44,0.31-0.54,0.91-0.24,1.34c0.21,0.3,0.56,0.45,0.92,0.4h1.88v10.61c0,0.53,0.43,0.96,0.96,0.96c0,0,0,0,0,0h15.43 c0.53,0,0.96-0.43,0.96-0.96c0,0,0,0,0,0V11.91h1.93c0.53,0.04,0.99-0.36,1.04-0.89C23.72,10.69,23.57,10.37,23.29,10.17z M18.8,16.74H5.3v-4.82h13.5V16.74z\" /> </g>",
+                    "hue-wall-lantern": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M16.33,18.41c-0.99-0.32-2.43-0.32-3.41,0l-0.82-5.82c1.61,0.2,3.44,0.2,5.05,0L16.33,18.41z M19.19,9.57 c-1.17-0.35-2.7-0.54-4.25-0.56C14.58,6.46,12.39,4.5,9.75,4.5c-1.16,0-2.22,0.38-3.09,1.02C6.6,5.03,6.52,4.57,6.4,4.17 C6.21,3.5,5.97,3.12,5.72,3.03C5.68,3.01,5.63,3,5.59,3H4.16C4.12,3,4.07,3.01,4.03,3.03c-0.26,0.1-0.5,0.51-0.7,1.22 c-0.44,1.6-0.44,4.16,0,5.76c0.2,0.71,0.44,1.12,0.7,1.21c0.04,0.02,0.09,0.03,0.13,0.03h1.43c0.04,0,0.09-0.01,0.13-0.03 c0.25-0.1,0.49-0.48,0.68-1.14c0.21-0.75,0.33-1.72,0.34-2.7C7.45,6.48,8.53,5.9,9.75,5.9c1.88,0,3.44,1.35,3.78,3.13 c-1.27,0.07-2.49,0.24-3.47,0.54c-2.47,0.75-2.39,1.93,0.12,2.65c0.11,0.03,0.25,0.05,0.37,0.09l1.08,7.68 c0.09,0.34,0.62,0.75,1.86,0.93c0.38,0.05,0.76,0.08,1.14,0.08c0.38,0,0.77-0.03,1.14-0.08c1.23-0.18,1.74-0.59,1.86-0.93l1.08-7.69 c0.12-0.03,0.25-0.05,0.37-0.09C21.58,11.5,21.66,10.31,19.19,9.57z\" /> </g>",
+                    "hue-wall-shade": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M16.4,5.77c-1.18,0.3-3.11,0.3-4.3,0c-1.16-0.3-1.12-0.78,0.05-1.07c1.16-0.29,3.03-0.29,4.19,0 C17.52,4.99,17.56,5.47,16.4,5.77 M20.96,11.06l-2.03-6.82l-0.02-0.07c-0.19-0.43-1.11-0.83-2.75-1.05c-1.25-0.17-2.52-0.17-3.77,0 c-1.64,0.22-2.55,0.62-2.74,1.05L9.62,4.29l-2.08,6.77c-0.03,0.09-0.05,0.2-0.04,0.3c0.17,1.11,2.17,2,5.84,2.12 c-0.49,1.74-2.09,3.02-3.99,3.02c-0.99,0-1.9-0.35-2.61-0.93c-0.03-1.07-0.14-2.12-0.34-2.93c-0.19-0.79-0.43-1.24-0.68-1.35 c-0.04-0.02-0.09-0.03-0.13-0.03H4.16c-0.04,0-0.09,0.01-0.13,0.03c-0.26,0.12-0.5,0.6-0.7,1.44c-0.44,1.89-0.44,4.92,0,6.81 c0.2,0.84,0.44,1.32,0.7,1.44C4.07,20.99,4.12,21,4.16,21h1.43c0.04,0,0.09-0.01,0.13-0.03c0.25-0.12,0.49-0.56,0.68-1.36 c0.16-0.65,0.26-1.44,0.31-2.27C7.5,17.76,8.4,18,9.35,18c2.73,0,5-1.94,5.53-4.51c3.84-0.09,5.95-1,6.11-2.14 C21.01,11.26,20.99,11.16,20.96,11.06\" /> </g>",
+                    "hue-wall-spot": "<g fill=\"currentColor\" stroke=\"none\"> <path d=\"M17.54,16.14c-1.43,1.04-3.05,1.26-3.61,0.48c-0.56-0.78,0.14-2.25,1.57-3.29c1.43-1.04,3.04-1.26,3.61-0.48 C19.68,13.62,18.97,15.09,17.54,16.14 M20.71,12.45l-6.56-7.5c-0.67-0.87-2.65-0.43-4.41,0.98c-1.76,1.41-2.7,3.51-2.02,4.38 l0.66,0.94H6.73C6.69,10.34,6.58,9.47,6.4,8.78C6.21,8.05,5.96,7.63,5.72,7.53C5.68,7.51,5.63,7.5,5.59,7.5H4.16 c-0.04,0-0.09,0.01-0.13,0.03c-0.26,0.11-0.5,0.56-0.7,1.33c-0.44,1.75-0.44,4.54,0,6.29c0.2,0.77,0.44,1.22,0.7,1.33 c0.04,0.02,0.09,0.03,0.13,0.03h1.43c0.04,0,0.09-0.01,0.13-0.03c0.25-0.11,0.49-0.52,0.68-1.25c0.18-0.69,0.29-1.56,0.33-2.47h2.7 l3.71,5.3c0.83,1.16,3.2,0.85,5.29-0.7C20.52,15.81,21.54,13.61,20.71,12.45\" /> </g>"
+                };
+
+                var HUE_LIGHT_ARCHETYPES = {
+                    classic_bulb: "hue-bulb-classic",
+                    sultan_bulb: "hue-bulb-sultan",
+                    spot_bulb: "hue-bulb-spot",
+                    flood_bulb: "hue-bulb-flood",
+                    candle_bulb: "hue-bulb-candle",
+                    hue_lightstrip: "hue-lightstrip",
+                    hue_iris: "hue-iris",
+                    hue_bloom: "hue-bloom",
+                    hue_go: "hue-go",
+                    hue_play: "hue-play-bar",
+                    pendant_round: "hue-pendant-round",
+                    pendant_long: "hue-pendant-long",
+                    ceiling_round: "hue-ceiling-round",
+                    ceiling_square: "hue-ceiling-square",
+                    floor_shade: "hue-floor-shade",
+                    floor_lantern: "hue-floor-lantern",
+                    floor_spot: "hue-floor-spot",
+                    table_shade: "hue-table-shade",
+                    table_wash: "hue-table-wash",
+                    recessed_ceiling: "hue-recessed-ceiling",
+                    recessed_floor: "hue-recessed-floor",
+                    single_spot: "hue-single-spot",
+                    double_spot: "hue-double-spot",
+                    wall_lantern: "hue-wall-lantern",
+                    wall_shade: "hue-wall-shade",
+                    wall_spot: "hue-wall-spot",
+                    bollard: "hue-bollard",
+                    desk_lamp: "hue-desk-lamp"
+                };
+
+                var HUE_ROOM_ARCHETYPES = {
+                    living_room: "hue-room-living",
+                    kitchen: "hue-room-kitchen",
+                    dining: "hue-room-dining",
+                    bedroom: "hue-room-bedroom",
+                    kids_bedroom: "hue-room-kids",
+                    bathroom: "hue-room-bathroom",
+                    nursery: "hue-room-nursery",
+                    recreation: "hue-room-recreation",
+                    office: "hue-room-office",
+                    gym: "hue-room-gym",
+                    hallway: "hue-room-hallway",
+                    toilet: "hue-room-toilet",
+                    front_door: "hue-room-front-door",
+                    garage: "hue-room-garage",
+                    terrace: "hue-room-terrace",
+                    driveway: "hue-room-driveway",
+                    carport: "hue-room-carport",
+                    home: "hue-home",
+                    downstairs: "hue-downstairs",
+                    upstairs: "hue-upstairs",
+                    attic: "hue-room-attic",
+                    guest_room: "hue-room-guestroom",
+                    staircase: "hue-room-stairs",
+                    lounge: "hue-room-lounge",
+                    computer: "hue-room-computer",
+                    studio: "hue-room-studio",
+                    closet: "hue-room-closet",
+                    storage: "hue-room-storage",
+                    laundry_room: "hue-room-laundry",
+                    balcony: "hue-room-balcony",
+                    porch: "hue-room-porch",
+                    barbecue: "hue-room-bbq",
+                    pool: "hue-room-pool",
+                    other: "hue-room-other"
+                };
+
+                function getHueSvgIcon(type, archetype, name) {
+                    var a = (archetype || "").toLowerCase().trim();
+                    var n = (name || "").toLowerCase().trim();
+
+                    if (type === "device") {
+                        if (n.indexOf("tv") !== -1 || n.indexOf("oled") !== -1 || a.indexOf("tv") !== -1) {
+                            return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>';
+                        }
+                        if (n.indexOf("phone") !== -1 || n.indexOf("pixel") !== -1 || n.indexOf("iphone") !== -1 || (a.indexOf("android") !== -1 && a.indexOf("tv") === -1)) {
+                            return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
+                        }
+                        if (n.indexOf("ipad") !== -1 || n.indexOf("tablet") !== -1) {
+                            return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
+                        }
+                        return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>';
+                    }
+
+                    if (type === "user") {
+                        return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>';
+                    }
+
+                    var iconKey = null;
+
+                    if (type === "zone") {
+                        if (a && HUE_ROOM_ARCHETYPES[a]) {
+                            iconKey = HUE_ROOM_ARCHETYPES[a];
+                        } else {
+                            iconKey = "zone";
+                        }
+                    } else if (type === "room") {
+                        if (a && HUE_ROOM_ARCHETYPES[a]) {
+                            iconKey = HUE_ROOM_ARCHETYPES[a];
+                        } else {
+                            if (n.indexOf("bed") !== -1 || n.indexOf("chambre") !== -1) iconKey = "hue-room-bedroom";
+                            else if (n.indexOf("kitchen") !== -1 || n.indexOf("cuisine") !== -1) iconKey = "hue-room-kitchen";
+                            else if (n.indexOf("bath") !== -1 || n.indexOf("bain") !== -1 || n.indexOf("douche") !== -1) iconKey = "hue-room-bathroom";
+                            else if (n.indexOf("toilet") !== -1 || n.indexOf("wc") !== -1) iconKey = "hue-room-toilet";
+                            else if (n.indexOf("office") !== -1 || n.indexOf("bureau") !== -1) iconKey = "hue-room-office";
+                            else if (n.indexOf("computer") !== -1 || n.indexOf("pc") !== -1) iconKey = "hue-room-computer";
+                            else if (n.indexOf("hall") !== -1 || n.indexOf("couloir") !== -1) iconKey = "hue-room-hallway";
+                            else if (n.indexOf("entr") !== -1) iconKey = "hue-room-front-door";
+                            else if (n.indexOf("dining") !== -1 || n.indexOf("manger") !== -1) iconKey = "hue-room-dining";
+                            else if (n.indexOf("garage") !== -1) iconKey = "hue-room-garage";
+                            else if (n.indexOf("terras") !== -1 || n.indexOf("terrac") !== -1) iconKey = "hue-room-terrace";
+                            else if (n.indexOf("balcon") !== -1) iconKey = "hue-room-balcony";
+                            else if (n.indexOf("stairs") !== -1 || n.indexOf("escalier") !== -1) iconKey = "hue-room-stairs";
+                            else iconKey = "hue-room-living";
+                        }
+                    } else {
+                        // Light
+                        if (a && HUE_LIGHT_ARCHETYPES[a]) {
+                            iconKey = HUE_LIGHT_ARCHETYPES[a];
+                        } else {
+                            if (a.indexOf("play") !== -1 || n.indexOf("play") !== -1) iconKey = "hue-play-bar";
+                            else if (a.indexOf("strip") !== -1 || n.indexOf("strip") !== -1 || n.indexOf("ruban") !== -1) iconKey = "hue-lightstrip";
+                            else if (a.indexOf("spot") !== -1 || n.indexOf("spot") !== -1) iconKey = "hue-bulb-spot";
+                            else if (a.indexOf("candle") !== -1 || n.indexOf("bougie") !== -1 || n.indexOf("candle") !== -1) iconKey = "hue-bulb-candle";
+                            else if (a.indexOf("flood") !== -1) iconKey = "hue-bulb-flood";
+                            else if (a.indexOf("sultan") !== -1) iconKey = "hue-bulb-sultan";
+                            else if (a.indexOf("ceiling") !== -1 || n.indexOf("plafond") !== -1) iconKey = "hue-ceiling-round";
+                            else if (a.indexOf("desk") !== -1 || a.indexOf("lamp") !== -1 || n.indexOf("lampe") !== -1) iconKey = "hue-desk-lamp";
+                            else iconKey = "hue-bulb-classic";
+                        }
+                    }
+
+                    var content = (iconKey && HUE_SVG_ICONS[iconKey]) || HUE_SVG_ICONS["hue-bulb-classic"] || HUE_SVG_ICONS["bulb"];
+                    return '<svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:middle;">' + content + '</svg>';
+                }
+
+                function setupBrightnessSlider(rangeId, badgeId, isOffAllowed) {
+                    var range = document.getElementById(rangeId);
+                    var badge = document.getElementById(badgeId);
+                    if (!range || !badge) return;
+
+                    function update() {
+                        var val = parseInt(range.value, 10) || 0;
+                        if (val === 0 && isOffAllowed) {
+                            badge.textContent = "0% (" + t("lightOff") + ")";
+                            badge.style.color = "#aaa";
+                        } else {
+                            badge.textContent = val + "%";
+                            badge.style.color = "#00a4dc";
+                        }
+                    }
+                    range.oninput = update;
+                    update();
+                }
+
+                function clampMs(val, defaultVal) {
+                    var n = parseInt(val, 10);
+                    if (isNaN(n) || n < 0) return defaultVal !== undefined ? defaultVal : 0;
+                    if (n > 60000) return 60000;
+                    return n;
+                }
+
+                function setupDurationInput(id, defaultVal) {
+                    var input = document.getElementById(id);
+                    if (!input) return;
+                    input.addEventListener("change", function () {
+                        input.value = clampMs(input.value, defaultVal);
+                    });
+                    input.addEventListener("blur", function () {
+                        input.value = clampMs(input.value, defaultVal);
+                    });
+                }
+
+                function populateTimeOptions(selectId, selectedVal) {
+                    var sel = document.getElementById(selectId);
+                    if (!sel) return;
+                    sel.innerHTML = "";
+                    for (var h = 0; h < 24; h++) {
+                        for (var m = 0; m < 60; m += 30) {
+                            var hh = (h < 10 ? "0" : "") + h;
+                            var mm = (m === 0 ? "00" : "30");
+                            var timeStr = hh + ":" + mm;
+                            var opt = document.createElement("option");
+                            opt.value = timeStr;
+                            opt.textContent = timeStr;
+                            if (timeStr === selectedVal) {
+                                opt.selected = true;
+                            }
+                            sel.appendChild(opt);
+                        }
+                    }
+                }
+
+                function updateTimeFilterDesc() {
+                    var startSel = document.getElementById("selTimeFilterStart");
+                    var endSel = document.getElementById("selTimeFilterEnd");
+                    var desc = document.getElementById("timeFilterDesc");
+                    if (!startSel || !endSel || !desc) return;
+                    var start = startSel.value;
+                    var end = endSel.value;
+                    var tpl = t("descTimeFilterActive") || "Profile will only trigger between {0} and {1}.";
+                    desc.textContent = tpl.replace("{0}", start).replace("{1}", end);
+                }
+
+                var HUE_PRESET_COLORS = [
+                    { hex: "#FF932C", key: "presetCandle" },
+                    { hex: "#FFAF66", key: "presetWarm2700" },
+                    { hex: "#FFE4B5", key: "presetSoft3000" },
+                    { hex: "#FFF1E0", key: "presetNeutral4000" },
+                    { hex: "#C8E0FF", key: "presetCool6500" },
+                    { hex: "#1E3A8A", key: "presetNightBlue" },
+                    { hex: "#FF5722", key: "presetSunset" },
+                    { hex: "#DC2626", key: "presetRed" },
+                    { hex: "#16A34A", key: "presetGreen" },
+                    { hex: "#9333EA", key: "presetPurple" }
+                ];
+
+                function setupColorPicker(textId, pickerId, boxId, swatchesId) {
+                    var txt = document.getElementById(textId);
+                    var picker = document.getElementById(pickerId);
+                    var box = document.getElementById(boxId);
+                    var swatches = document.getElementById(swatchesId);
+                    if (!txt || !picker || !box) return;
+
+                    function setColor(hex) {
+                        if (!hex) hex = "#FFB366";
+                        if (hex.indexOf("#") !== 0) hex = "#" + hex;
+                        txt.value = hex.toUpperCase();
+                        picker.value = hex;
+                        box.style.background = hex;
+                    }
+
+                    picker.oninput = function () {
+                        setColor(picker.value);
+                    };
+
+                    txt.oninput = function () {
+                        var v = txt.value.trim();
+                        if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+                            setColor(v);
+                        }
+                    };
+
+                    if (swatches && swatches.children.length === 0) {
+                        HUE_PRESET_COLORS.forEach(function (preset) {
+                            var btn = document.createElement("button");
+                            btn.type = "button";
+                            btn.className = "hue-swatch-btn";
+                            btn.style.background = preset.hex;
+                            var colorTitle = t(preset.key);
+                            btn.title = colorTitle + " (" + preset.hex + ")";
+                            btn.addEventListener("click", function () {
+                                setColor(preset.hex);
+                            });
+                            swatches.appendChild(btn);
+                        });
+                    }
+
+                    setColor(txt.value || "#FFB366");
+                }
+
+                function updateColorPickerVisibility() {
+                    var selectedGroupIds = [];
+                    document.querySelectorAll("#hueTargetGroupsList input[type='checkbox']:checked").forEach(function (cb) {
+                        selectedGroupIds.push(cb.value);
+                    });
+                    var selectedLightIds = [];
+                    document.querySelectorAll("#hueTargetLightsList input[type='checkbox']:checked").forEach(function (cb) {
+                        selectedLightIds.push(cb.value);
+                    });
+
+                    var allGroups = (currentResources.rooms || currentResources.Rooms || []).concat(currentResources.zones || currentResources.Zones || []);
+                    var allLights = (currentResources.lights || currentResources.Lights || []);
+
+                    var anySupportsColor = false;
+                    var anySupportsCt = false;
+                    var hasSelection = selectedGroupIds.length > 0 || selectedLightIds.length > 0;
+
+                    if (!hasSelection) {
+                        anySupportsColor = true;
+                    } else {
+                        selectedGroupIds.forEach(function (gid) {
+                            var g = allGroups.find(function (x) { return (x.id || x.Id) === gid; });
+                            if (g) {
+                                if (g.supportsColor === true || g.SupportsColor === true) anySupportsColor = true;
+                                if (g.supportsColorTemperature === true || g.SupportsColorTemperature === true) anySupportsCt = true;
+                            }
+                        });
+                        selectedLightIds.forEach(function (lid) {
+                            var l = allLights.find(function (x) { return (x.id || x.Id) === lid; });
+                            if (l) {
+                                if (l.supportsColor === true || l.SupportsColor === true) anySupportsColor = true;
+                                if (l.supportsColorTemperature === true || l.SupportsColorTemperature === true) anySupportsCt = true;
+                            }
+                        });
+                    }
+
+                    var warnText = "";
+                    if (hasSelection && !anySupportsColor) {
+                        if (anySupportsCt) {
+                            warnText = "💡 " + t("warnTargetsWhiteAmbiance");
+                        } else {
+                            warnText = "💡 " + t("warnTargetsFixedWhite");
+                        }
+                    }
+
+                    ["Play", "Pause", "Stop"].forEach(function (action) {
+                        var row = document.getElementById("row" + action + "Color");
+                        var warn = document.getElementById("warn" + action + "NoColor");
+
+                        if (row) {
+                            var wrap = row.querySelector(".hue-color-picker-wrap");
+                            if (wrap) wrap.style.display = "flex";
+                        }
+
+                        if (warn) {
+                            if (warnText) {
+                                warn.textContent = warnText;
+                                warn.style.display = "block";
+                            } else {
+                                warn.style.display = "none";
+                            }
+                        }
+                    });
+                }
+
+                function renderProfiles() {
+                    var container = document.getElementById("profilesList");
+                    container.innerHTML = "";
+
+                    if (!currentConfig.Profiles || currentConfig.Profiles.length === 0) {
+                        container.innerHTML = '<div class="hue-card"><p>' + t("noProfilesConfigured") + '</p></div>';
+                        return;
+                    }
+
+                    currentConfig.Profiles.forEach(function (p) {
+                        var card = document.createElement("div");
+                        card.className = "hue-card";
+
+                        var userLabels = (p.TargetUserIds && p.TargetUserIds.length > 0)
+                            ? t("userCount", p.TargetUserIds.length)
+                            : t("allUsers");
+
+                        var deviceLabels = (p.TargetDeviceIds && p.TargetDeviceIds.length > 0)
+                            ? p.TargetDeviceIds.join(", ")
+                            : t("allDevices");
+
+                        var targetCount = (p.TargetGroupIds ? p.TargetGroupIds.length : 0) + (p.TargetLightIds ? p.TargetLightIds.length : 0);
+
+                        var mediaTags = [];
+                        if (p.TriggerOnMovies) mediaTags.push(t("tagMovies"));
+                        if (p.TriggerOnEpisodes) mediaTags.push(t("tagEpisodes"));
+
+                        var timeBadge = p.EnableTimeFilter
+                            ? ('⏰ ' + (p.TimeFilterStart || "20:00") + ' - ' + (p.TimeFilterEnd || "06:00"))
+                            : ('⏰ ' + t("timeAllDay"));
+
+                        card.innerHTML =
+                            '<div class="hue-card-header">' +
+                                '<h3 class="hue-card-title">' + escapeHtml(p.Name) + '</h3>' +
+                                '<span class="hue-badge ' + (p.Enabled ? 'hue-badge-success' : 'hue-badge-warning') + '">' +
+                                    (p.Enabled ? t("badgeActive") : t("badgeDisabled")) +
+                                '</span>' +
+                            '</div>' +
+                            '<div class="hue-meta">' +
+                                '<span>👤 ' + escapeHtml(userLabels) + '</span>' +
+                                '<span>📱 ' + escapeHtml(deviceLabels) + '</span>' +
+                                '<span>💡 ' + t("targetsCount", targetCount) + '</span>' +
+                                '<span>🎬 ' + escapeHtml(mediaTags.join(" / ")) + '</span>' +
+                                '<span>' + escapeHtml(timeBadge) + '</span>' +
+                            '</div>' +
+                            '<div class="hue-actions">' +
+                                '<button is="emby-button" type="button" class="raised" data-action="edit" data-id="' + p.Id + '">' + t("btnEdit") + '</button>' +
+                                '<button is="emby-button" type="button" class="raised" data-action="test" data-id="' + p.Id + '">' + t("btnTest") + '</button>' +
+                                '<button is="emby-button" type="button" class="raised hue-btn-delete" data-action="delete" data-id="' + p.Id + '">' + t("btnDelete") + '</button>' +
+                            '</div>';
+
+                        container.appendChild(card);
+                    });
+
+                    container.querySelectorAll("button[data-action='edit']").forEach(function (btn) {
+                        btn.addEventListener("click", function () {
+                            openProfileEditor(btn.getAttribute("data-id"));
+                        });
+                    });
+
+                    container.querySelectorAll("button[data-action='delete']").forEach(function (btn) {
+                        btn.addEventListener("click", function () {
+                            var id = btn.getAttribute("data-id");
+                            if (confirm(t("confirmDeleteProfile"))) {
+                                currentConfig.Profiles = currentConfig.Profiles.filter(function (x) { return x.Id !== id; });
+                                saveConfig();
+                                renderProfiles();
+                            }
+                        });
+                    });
+
+                    container.querySelectorAll("button[data-action='test']").forEach(function (btn) {
+                        btn.addEventListener("click", function () {
+                            var id = btn.getAttribute("data-id");
+                            var p = currentConfig.Profiles.find(function (x) { return x.Id === id; });
+                            if (!p) return;
+
+                            var targetCount = (p.TargetGroupIds ? p.TargetGroupIds.length : 0) + (p.TargetLightIds ? p.TargetLightIds.length : 0);
+                            if (targetCount === 0) {
+                                Dashboard.alert(t("noTargetsInProfile"));
+                                return;
+                            }
+
+                            var oldText = btn.textContent;
+                            btn.disabled = true;
+
+                            var playSec = Math.max(2, Math.round(((p.PlayTransitionDurationMs !== undefined ? p.PlayTransitionDurationMs : 1000) + 2000) / 1000));
+                            var pauseSec = Math.max(2, Math.round(((p.PauseTransitionDurationMs !== undefined ? p.PauseTransitionDurationMs : 1000) + 2000) / 1000));
+
+                            var resumeDuration = p.ResumeSameAsPlay !== false ? (p.PlayTransitionDurationMs || 1000) : (p.ResumeTransitionDurationMs || 3000);
+                            var resumeSec = Math.max(2, Math.round((resumeDuration + 2000) / 1000));
+
+                            var phases = [
+                                { labelKey: "testPhasePlay", duration: playSec },
+                                { labelKey: "testPhasePause", duration: pauseSec },
+                                { labelKey: "testPhaseResume", duration: resumeSec }
+                            ];
+
+                            if (p.RestoreStateOnStop !== false) {
+                                var stopSec = Math.max(1, Math.round((p.StopTransitionDurationMs || 2000) / 1000));
+                                phases.push({ labelKey: "testPhaseRestore", duration: stopSec });
+                            } else {
+                                var stopSec = Math.max(2, Math.round(((p.StopTransitionDurationMs || 2000) + 2000) / 1000));
+                                phases.push({ labelKey: "testPhaseStop", duration: stopSec });
+                                phases.push({ labelKey: "testPhaseRestore", duration: 1 });
+                            }
+                            var currentPhaseIdx = 0;
+                            var phaseRemainingSec = phases[0].duration;
+
+                            function renderBtnText() {
+                                var phase = phases[currentPhaseIdx];
+                                if (!phase) return;
+                                var tpl = t(phase.labelKey) || "{0}s...";
+                                btn.textContent = tpl.replace("{0}", phaseRemainingSec);
+                            }
+                            renderBtnText();
+
+                            var countdownInterval = setInterval(function () {
+                                phaseRemainingSec--;
+                                if (phaseRemainingSec <= 0) {
+                                    currentPhaseIdx++;
+                                    if (currentPhaseIdx < phases.length) {
+                                        phaseRemainingSec = phases[currentPhaseIdx].duration;
+                                    }
+                                }
+                                renderBtnText();
+                            }, 1000);
+
+                            ApiClient.ajax({
+                                type: "POST",
+                                url: ApiClient.getUrl("Hue/TestProfile/" + p.Id)
+                            }).then(function () {
+                                clearInterval(countdownInterval);
+                                btn.disabled = false;
+                                btn.textContent = oldText;
+                                Dashboard.alert(t("testProfileRestored") || "✅ Simulation terminée : scénario Lecture ➔ Pause ➔ Rétablissement validé !");
+                            }).catch(function (err) {
+                                clearInterval(countdownInterval);
+                                btn.disabled = false;
+                                btn.textContent = oldText;
+                                console.error("TestProfile error:", err);
+                                Dashboard.alert("Erreur lors du test: " + (err.message || err));
+                            });
+                        });
+                    });
+                }
+
+                function renderHueTargets(p) {
+                    var groupsContainer = document.getElementById("hueTargetGroupsList");
+                    var lightsContainer = document.getElementById("hueTargetLightsList");
+                    if (!groupsContainer || !lightsContainer) return;
+                    groupsContainer.innerHTML = "";
+                    lightsContainer.innerHTML = "";
+
+                    var rooms = currentResources.rooms || currentResources.Rooms || [];
+                    var zones = currentResources.zones || currentResources.Zones || [];
+                    var lights = currentResources.lights || currentResources.Lights || [];
+
+                    var allGroups = rooms.map(function (r) { r._isZone = false; return r; })
+                        .concat(zones.map(function (z) { z._isZone = true; return z; }))
+                        .sort(function (a, b) {
+                            return (a.name || a.Name || "").localeCompare(b.name || b.Name || "", undefined, { sensitivity: "base" });
+                        });
+
+                    if (allGroups.length === 0) {
+                        groupsContainer.innerHTML = '<div style="color:#aaa; font-style:italic;">' + t("noTargetsAvailable") + '</div>';
+                    } else {
+                        allGroups.forEach(function (g) {
+                            var gid = g.id || g.Id;
+                            var gName = g.name || g.Name;
+                            var gArch = g.archetype || g.Archetype;
+                            var gSupportsColor = (g.supportsColor === true || g.SupportsColor === true);
+                            var gSupportsCt = (g.supportsColorTemperature === true || g.SupportsColorTemperature === true);
+                            var isChecked = p.TargetGroupIds && p.TargetGroupIds.indexOf(gid) !== -1;
+
+                            var gBadgeColor = gSupportsColor ? '#81c784' : (gSupportsCt ? '#64b5f6' : '#ffb74d');
+                            var gBadgeLabel = gSupportsColor ? t("colorSupported") : (gSupportsCt ? t("whiteAdjustable") : t("whiteFixed"));
+
+                            var card = document.createElement("div");
+                            card.className = "hue-target-card" + (isChecked ? " selected" : "");
+                            card.innerHTML =
+                                '<input type="checkbox" class="hue-card-cb" value="' + escapeHtml(gid) + '" ' + (isChecked ? 'checked' : '') + ' />' +
+                                '<span class="hue-target-icon">' + getHueSvgIcon(g._isZone ? "zone" : "room", gArch, gName) + '</span>' +
+                                '<div class="hue-target-info">' +
+                                    '<div class="hue-target-name">' + escapeHtml(gName) + '</div>' +
+                                    '<div class="hue-target-meta">' +
+                                        '<span>' + (g._isZone ? t("zoneType") : t("roomType")) + '</span> • ' +
+                                        '<span style="color:' + gBadgeColor + ';">' + gBadgeLabel + '</span>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<span class="hue-target-check"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>';
+
+                            card.addEventListener("click", function (e) {
+                                var cb = card.querySelector("input[type='checkbox']");
+                                if (e.target !== cb) {
+                                    cb.checked = !cb.checked;
+                                }
+                                card.classList.toggle("selected", cb.checked);
+                                updateColorPickerVisibility();
+                            });
+
+                            groupsContainer.appendChild(card);
+                        });
+                    }
+
+                    var sortedLights = lights.slice().sort(function (a, b) {
+                        return (a.name || a.Name || "").localeCompare(b.name || b.Name || "", undefined, { sensitivity: "base" });
+                    });
+
+                    if (sortedLights.length === 0) {
+                        lightsContainer.innerHTML = '<div style="color:#aaa; font-style:italic;">' + t("noTargetsAvailable") + '</div>';
+                    } else {
+                        sortedLights.forEach(function (l) {
+                            var lid = l.id || l.Id;
+                            var lName = l.name || l.Name;
+                            var lArch = l.archetype || l.Archetype;
+                            var lSupportsColor = (l.supportsColor === true || l.SupportsColor === true);
+                            var lSupportsCt = (l.supportsColorTemperature === true || l.SupportsColorTemperature === true);
+                            var isChecked = p.TargetLightIds && p.TargetLightIds.indexOf(lid) !== -1;
+
+                            var lBadgeColor = lSupportsColor ? '#81c784' : (lSupportsCt ? '#64b5f6' : '#ffb74d');
+                            var lBadgeLabel = lSupportsColor ? t("colorSupported") : (lSupportsCt ? t("whiteAdjustable") : t("whiteFixed"));
+
+                            var card = document.createElement("div");
+                            card.className = "hue-target-card" + (isChecked ? " selected" : "");
+                            card.innerHTML =
+                                '<input type="checkbox" class="hue-card-cb" value="' + escapeHtml(lid) + '" ' + (isChecked ? 'checked' : '') + ' />' +
+                                '<span class="hue-target-icon">' + getHueSvgIcon("light", lArch, lName) + '</span>' +
+                                '<div class="hue-target-info">' +
+                                    '<div class="hue-target-name">' + escapeHtml(lName) + '</div>' +
+                                    '<div class="hue-target-meta">' +
+                                        '<span>' + t("lightType") + '</span> • ' +
+                                        '<span style="color:' + lBadgeColor + ';">' + lBadgeLabel + '</span>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<span class="hue-target-check"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>';
+
+                            card.addEventListener("click", function (e) {
+                                var cb = card.querySelector("input[type='checkbox']");
+                                if (e.target !== cb) {
+                                    cb.checked = !cb.checked;
+                                }
+                                card.classList.toggle("selected", cb.checked);
+                                updateColorPickerVisibility();
+                            });
+
+                            lightsContainer.appendChild(card);
+                        });
+                    }
+
+                    updateColorPickerVisibility();
+                }
+
+                function openProfileEditor(profileId) {
+                    applyStaticTranslations();
+                    editingProfileId = profileId;
+                    var p = currentConfig.Profiles.find(function (x) { return x.Id === profileId; });
+                    if (!p) {
+                        p = {
+                            Id: "p_" + Date.now(),
+                            Name: "Salon",
+                            Enabled: true,
+                            TargetUserIds: [],
+                            TargetDeviceIds: [],
+                            TriggerOnMovies: true,
+                            TriggerOnEpisodes: true,
+                            TargetGroupIds: [],
+                            TargetLightIds: [],
+                            PlayBrightness: 0,
+                            PlayTransitionDurationMs: 4000,
+                            PauseBrightness: 25,
+                            PauseColorHex: "#FFB366",
+                            PauseTransitionDurationMs: 1000,
+                            ResumeSameAsPlay: true,
+                            ResumeBrightness: 0,
+                            ResumeTransitionDurationMs: 3000,
+                            RestoreStateOnStop: true,
+                            StopBrightness: 80,
+                            StopColorHex: "#FFFFFF",
+                            StopTransitionDurationMs: 2000
+                        };
+                    }
+
+                    document.getElementById("editorTitle").textContent = profileId ? t("editProfileTitle") : t("addProfileTitle");
+                    document.getElementById("txtProfileName").value = p.Name || "";
+                    document.getElementById("chkProfileEnabled").checked = p.Enabled !== false;
+                    document.getElementById("chkTriggerMovies").checked = p.TriggerOnMovies !== false;
+                    document.getElementById("chkTriggerEpisodes").checked = p.TriggerOnEpisodes !== false;
+
+                    // Users grid as target cards with avatar
+                    var usersContainer = document.getElementById("jellyfinUsersCheckboxes");
+                    usersContainer.innerHTML = "";
+                    if (!usersList || usersList.length === 0) {
+                        usersContainer.innerHTML = '<div style="color:#aaa; font-style:italic;">' + t("noUsersFound") + '</div>';
+                    } else {
+                        var sortedUsers = usersList.slice().sort(function (a, b) {
+                            return (a.Name || "").localeCompare(b.Name || "", undefined, { sensitivity: "base" });
+                        });
+                        sortedUsers.forEach(function (u) {
+                            var isChecked = p.TargetUserIds && p.TargetUserIds.indexOf(u.Id) !== -1;
+                            var card = document.createElement("div");
+                            card.className = "hue-target-card" + (isChecked ? " selected" : "");
+
+                            var avatarUrl = null;
+                            if (u.PrimaryImageTag && typeof ApiClient !== "undefined") {
+                                if (ApiClient.getUserImageUrl) {
+                                    avatarUrl = ApiClient.getUserImageUrl(u.Id, { tag: u.PrimaryImageTag, type: "Primary", maxWidth: 64, maxHeight: 64 });
+                                } else if (ApiClient.getUrl) {
+                                    avatarUrl = ApiClient.getUrl("Users/" + u.Id + "/Images/Primary?tag=" + u.PrimaryImageTag + "&maxWidth=64");
+                                }
+                            }
+
+                            var iconHtml = avatarUrl
+                                ? '<img src="' + avatarUrl + '" alt="' + escapeHtml(u.Name) + '" style="width:100%; height:100%; object-fit:cover; border-radius:6px;" onerror="this.style.display=\'none\'; if(this.nextElementSibling) this.nextElementSibling.style.display=\'inline-flex\';" /><span style="display:none; width:100%; height:100%; align-items:center; justify-content:center;">' + getHueSvgIcon("user") + '</span>'
+                                : getHueSvgIcon("user");
+
+                            card.innerHTML =
+                                '<input type="checkbox" class="hue-card-cb" value="' + escapeHtml(u.Id) + '" ' + (isChecked ? 'checked' : '') + ' />' +
+                                '<span class="hue-target-icon" style="overflow:hidden; padding:0;">' + iconHtml + '</span>' +
+                                '<div class="hue-target-info">' +
+                                    '<div class="hue-target-name">' + escapeHtml(u.Name) + '</div>' +
+                                    '<div class="hue-target-meta">' +
+                                        '<span>' + (u.Policy && u.Policy.IsAdministrator ? t("roleAdmin") : t("roleUser")) + '</span>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<span class="hue-target-check"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>';
+
+                            card.addEventListener("click", function (e) {
+                                var cb = card.querySelector("input[type='checkbox']");
+                                if (e.target !== cb) {
+                                    cb.checked = !cb.checked;
+                                }
+                                card.classList.toggle("selected", cb.checked);
+                            });
+
+                            usersContainer.appendChild(card);
+                        });
+                    }
+
+                    // Devices checkboxes grid (deduplicated by device name, sorted by last activity)
+                    var devicesContainer = document.getElementById("jellyfinDevicesCheckboxes");
+                    devicesContainer.innerHTML = "";
+                    if (!devicesList || devicesList.length === 0) {
+                        devicesContainer.innerHTML = '<div style="color:#aaa; font-style:italic;">' + t("noDevicesFound") + '</div>';
+                    } else {
+                        var uniqueDevices = {};
+                        devicesList.forEach(function (d) {
+                            var key = (d.Name || d.DeviceName || d.Id || "Appareil").trim();
+                            if (!uniqueDevices[key]) {
+                                uniqueDevices[key] = {
+                                    name: key,
+                                    appName: d.AppName || d.Client || "Jellyfin Client",
+                                    appVersion: d.AppVersion || "",
+                                    lastUserName: d.LastUserName || "",
+                                    dateLastActivity: d.DateLastActivity || "",
+                                    ids: [d.Id, d.DeviceId].filter(Boolean)
+                                };
+                            } else {
+                                if (d.Id && uniqueDevices[key].ids.indexOf(d.Id) === -1) uniqueDevices[key].ids.push(d.Id);
+                                if (d.DeviceId && uniqueDevices[key].ids.indexOf(d.DeviceId) === -1) uniqueDevices[key].ids.push(d.DeviceId);
+                                if (d.DateLastActivity && (!uniqueDevices[key].dateLastActivity || d.DateLastActivity > uniqueDevices[key].dateLastActivity)) {
+                                    uniqueDevices[key].dateLastActivity = d.DateLastActivity;
+                                    if (d.AppName) uniqueDevices[key].appName = d.AppName;
+                                    if (d.AppVersion) uniqueDevices[key].appVersion = d.AppVersion;
+                                    if (d.LastUserName) uniqueDevices[key].lastUserName = d.LastUserName;
+                                }
+                            }
+                        });
+
+                        var sortedDevices = Object.keys(uniqueDevices).map(function (k) {
+                            return uniqueDevices[k];
+                        }).sort(function (a, b) {
+                            if (!a.dateLastActivity) return 1;
+                            if (!b.dateLastActivity) return -1;
+                            return b.dateLastActivity.localeCompare(a.dateLastActivity);
+                        });
+
+                        sortedDevices.forEach(function (dev) {
+                            var isChecked = p.TargetDeviceIds && (
+                                p.TargetDeviceIds.indexOf(dev.name) !== -1 ||
+                                dev.ids.some(function (id) { return p.TargetDeviceIds.indexOf(id) !== -1; })
+                            );
+                            var card = document.createElement("div");
+                            card.className = "hue-target-card" + (isChecked ? " selected" : "");
+
+                            var relDate = formatRelativeDate(dev.dateLastActivity);
+                            var metaParts = [dev.appName];
+                            if (relDate) metaParts.push(relDate);
+                            if (dev.lastUserName) metaParts.push("(" + dev.lastUserName + ")");
+
+                            card.innerHTML =
+                                '<input type="checkbox" class="hue-card-cb" value="' + escapeHtml(dev.name) + '" ' + (isChecked ? 'checked' : '') + ' />' +
+                                '<span class="hue-target-icon">' + getHueSvgIcon("device", dev.appName, dev.name) + '</span>' +
+                                '<div class="hue-target-info">' +
+                                    '<div class="hue-target-name">' + escapeHtml(dev.name) + '</div>' +
+                                    '<div class="hue-target-meta">' + escapeHtml(metaParts.join(" • ")) + '</div>' +
+                                '</div>' +
+                                '<span class="hue-target-check"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>';
+
+                            card.addEventListener("click", function (e) {
+                                var cb = card.querySelector("input[type='checkbox']");
+                                if (e.target !== cb) {
+                                    cb.checked = !cb.checked;
+                                }
+                                card.classList.toggle("selected", cb.checked);
+                            });
+
+                            devicesContainer.appendChild(card);
+                        });
+                    }
+
+                    // Render Hue Targets
+                    renderHueTargets(p);
+                    if (!currentResources.rooms || (currentResources.rooms.length === 0 && (!currentResources.Rooms || currentResources.Rooms.length === 0))) {
+                        loadHueResources().then(function () {
+                            renderHueTargets(p);
+                        });
+                    }
+
+                    // Time filter
+                    var chkTime = document.getElementById("chkEnableTimeFilter");
+                    var timeContainer = document.getElementById("timeFilterSettingsContainer");
+                    chkTime.checked = p.EnableTimeFilter === true;
+
+                    populateTimeOptions("selTimeFilterStart", p.TimeFilterStart || "20:00");
+                    populateTimeOptions("selTimeFilterEnd", p.TimeFilterEnd || "06:00");
+
+                    function updateTimeFilterVisibility() {
+                        timeContainer.style.display = chkTime.checked ? "block" : "none";
+                    }
+                    chkTime.onchange = updateTimeFilterVisibility;
+                    document.getElementById("selTimeFilterStart").onchange = updateTimeFilterDesc;
+                    document.getElementById("selTimeFilterEnd").onchange = updateTimeFilterDesc;
+
+                    updateTimeFilterVisibility();
+                    updateTimeFilterDesc();
+
+                    // Brightness Sliders & Color Pickers
+                    document.getElementById("numPlayBrightness").value = p.PlayBrightness ?? 0;
+                    document.getElementById("txtPlayColor").value = p.PlayColorHex || "#FFB366";
+                    document.getElementById("numPlayDuration").value = p.PlayTransitionDurationMs ?? 4000;
+                    setupBrightnessSlider("numPlayBrightness", "valPlayBrightness", true);
+                    setupColorPicker("txtPlayColor", "pickerPlayColor", "boxPlayColor", "swatchesPlay");
+                    setupDurationInput("numPlayDuration", 4000);
+
+                    document.getElementById("numPauseBrightness").value = p.PauseBrightness ?? 25;
+                    document.getElementById("txtPauseColor").value = p.PauseColorHex || "#FFB366";
+                    document.getElementById("numPauseDuration").value = p.PauseTransitionDurationMs ?? 1000;
+                    setupBrightnessSlider("numPauseBrightness", "valPauseBrightness", false);
+                    setupColorPicker("txtPauseColor", "pickerPauseColor", "boxPauseColor", "swatchesPause");
+                    setupDurationInput("numPauseDuration", 1000);
+
+                    // Resume Action
+                    var chkResumeSame = document.getElementById("chkResumeSameAsPlay");
+                    var resumeContainer = document.getElementById("resumeSettingsContainer");
+                    chkResumeSame.checked = p.ResumeSameAsPlay !== false;
+                    function updateResumeVisibility() {
+                        resumeContainer.style.display = chkResumeSame.checked ? "none" : "block";
+                    }
+                    chkResumeSame.onchange = updateResumeVisibility;
+                    updateResumeVisibility();
+
+                    document.getElementById("numResumeBrightness").value = p.ResumeBrightness ?? 0;
+                    document.getElementById("numResumeDuration").value = p.ResumeTransitionDurationMs ?? 3000;
+                    setupBrightnessSlider("numResumeBrightness", "valResumeBrightness", true);
+                    setupDurationInput("numResumeDuration", 3000);
+
+                    // Stop Action
+                    var chkRestore = document.getElementById("chkRestoreOnStop");
+                    var stopContainer = document.getElementById("stopSettingsContainer");
+                    chkRestore.checked = p.RestoreStateOnStop !== false;
+                    function updateStopVisibility() {
+                        stopContainer.style.display = chkRestore.checked ? "none" : "block";
+                    }
+                    chkRestore.onchange = updateStopVisibility;
+                    updateStopVisibility();
+
+                    document.getElementById("numStopBrightness").value = p.StopBrightness ?? 80;
+                    document.getElementById("txtStopColor").value = p.StopColorHex || "#FFFFFF";
+                    document.getElementById("numStopDuration").value = p.StopTransitionDurationMs ?? 2000;
+                    setupBrightnessSlider("numStopBrightness", "valStopBrightness", false);
+                    setupColorPicker("txtStopColor", "pickerStopColor", "boxStopColor", "swatchesStop");
+                    setupDurationInput("numStopDuration", 2000);
+
+                    // Switch view: Hide profiles list and show inline editor
+                    document.getElementById("profilesMainView").style.display = "none";
+                    document.getElementById("profileEditor").style.display = "block";
+                    document.getElementById("profileEditor").scrollIntoView({ behavior: "smooth" });
+                }
+
+                function closeProfileEditor() {
+                    document.getElementById("profileEditor").style.display = "none";
+                    document.getElementById("profilesMainView").style.display = "block";
+                }
+
+                function saveProfileEditor() {
+                    var selectedUsers = [];
+                    document.querySelectorAll("#jellyfinUsersCheckboxes input[type='checkbox']:checked").forEach(function (cb) {
+                        selectedUsers.push(cb.value);
+                    });
+
+                    var selectedDevices = [];
+                    document.querySelectorAll("#jellyfinDevicesCheckboxes input[type='checkbox']:checked").forEach(function (cb) {
+                        selectedDevices.push(cb.value);
+                    });
+
+                    var selectedGroups = [];
+                    document.querySelectorAll("#hueTargetGroupsList input[type='checkbox']:checked").forEach(function (cb) {
+                        selectedGroups.push(cb.value);
+                    });
+
+                    var selectedLights = [];
+                    document.querySelectorAll("#hueTargetLightsList input[type='checkbox']:checked").forEach(function (cb) {
+                        selectedLights.push(cb.value);
+                    });
+
+                    var p = {
+                        Id: editingProfileId || ("p_" + Date.now()),
+                        Name: document.getElementById("txtProfileName").value.trim() || "Salon",
+                        Enabled: document.getElementById("chkProfileEnabled").checked,
+                        TargetUserIds: selectedUsers,
+                        TargetDeviceIds: selectedDevices,
+                        TriggerOnMovies: document.getElementById("chkTriggerMovies").checked,
+                        TriggerOnEpisodes: document.getElementById("chkTriggerEpisodes").checked,
+                        EnableTimeFilter: document.getElementById("chkEnableTimeFilter").checked,
+                        TimeFilterStart: document.getElementById("selTimeFilterStart").value || "20:00",
+                        TimeFilterEnd: document.getElementById("selTimeFilterEnd").value || "06:00",
+                        TargetGroupIds: selectedGroups,
+                        TargetLightIds: selectedLights,
+                        PlayBrightness: parseInt(document.getElementById("numPlayBrightness").value, 10) || 0,
+                        PlayColorHex: document.getElementById("txtPlayColor").value.trim() || "#FFB366",
+                        PlayTransitionDurationMs: clampMs(document.getElementById("numPlayDuration").value, 4000),
+                        PauseBrightness: parseInt(document.getElementById("numPauseBrightness").value, 10) || 25,
+                        PauseColorHex: document.getElementById("txtPauseColor").value.trim() || "#FFB366",
+                        PauseTransitionDurationMs: clampMs(document.getElementById("numPauseDuration").value, 1000),
+                        ResumeSameAsPlay: document.getElementById("chkResumeSameAsPlay").checked,
+                        ResumeBrightness: parseInt(document.getElementById("numResumeBrightness").value, 10) || 0,
+                        ResumeTransitionDurationMs: clampMs(document.getElementById("numResumeDuration").value, 3000),
+                        RestoreStateOnStop: document.getElementById("chkRestoreOnStop").checked,
+                        StopBrightness: parseInt(document.getElementById("numStopBrightness").value, 10) || 80,
+                        StopColorHex: document.getElementById("txtStopColor").value.trim() || "#FFFFFF",
+                        StopTransitionDurationMs: clampMs(document.getElementById("numStopDuration").value, 2000)
+                    };
+
+                    var idx = currentConfig.Profiles.findIndex(function (x) { return x.Id === p.Id; });
+                    if (idx >= 0) {
+                        currentConfig.Profiles[idx] = p;
+                    } else {
+                        currentConfig.Profiles.push(p);
+                    }
+
+                    closeProfileEditor();
+                    saveConfig();
+                    renderProfiles();
+                }
+
+                function saveConfig() {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.updatePluginConfiguration(pluginId, currentConfig).then(function (res) {
+                        Dashboard.processPluginConfigurationUpdateResult(res);
+                        Dashboard.hideLoadingMsg();
+                    });
+                }
+
+                function escapeHtml(text) {
+                    var div = document.createElement("div");
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                // Page setup
+                var page = document.getElementById("HueConfigPage");
+                page.addEventListener("pageshow", function () {
+                    loadConfig();
+                });
+                page.addEventListener("pagehide", function () {
+                    stopAutoPairing();
+                });
+
+                document.getElementById("btnRefreshBridges").addEventListener("click", function () {
+                    scanForBridges();
+                });
+
+                document.getElementById("lnkToggleManualIp").addEventListener("click", function (e) {
+                    e.preventDefault();
+                    var container = document.getElementById("manualIpContainer");
+                    container.style.display = container.style.display === "none" ? "block" : "none";
+                });
+
+                document.getElementById("txtBridgeIp").addEventListener("input", function () {
+                    var val = this.value.trim();
+                    if (val) {
+                        selectBridge(val);
+                    }
+                });
+
+                document.getElementById("btnRetryPair").addEventListener("click", function () {
+                    var ip = selectedBridgeIp || document.getElementById("txtBridgeIp").value.trim();
+                    if (ip) {
+                        startAutoPairing(ip);
+                    }
+                });
+
+                document.getElementById("btnDisconnectBridge").addEventListener("click", function () {
+                    if (confirm(t("confirmUnpair"))) {
+                        stopAutoPairing();
+                        currentConfig.BridgeIp = "";
+                        currentConfig.BridgeUsername = "";
+                        currentConfig.BridgeClientKey = "";
+                        saveConfig();
+                        renderConnectionState();
+                        scanForBridges();
+                    }
+                });
+
+                document.getElementById("btnRefreshResources").addEventListener("click", function () {
+                    Dashboard.showLoadingMsg();
+                    loadHueResources();
+                    setTimeout(function () {
+                        Dashboard.hideLoadingMsg();
+                        Dashboard.alert(t("alertRefreshed"));
+                    }, 500);
+                });
+
+                document.getElementById("btnAddProfile").addEventListener("click", function () {
+                    if (!currentConfig.BridgeIp || !currentConfig.BridgeUsername) {
+                        Dashboard.alert(t("bridgeNotSetup"));
+                        return;
+                    }
+                    openProfileEditor(null);
+                });
+
+                document.getElementById("btnCancelProfile").addEventListener("click", function () {
+                    closeProfileEditor();
+                });
+
+                document.getElementById("btnTopCancelProfile").addEventListener("click", function () {
+                    closeProfileEditor();
+                });
+
+                document.getElementById("btnSaveProfile").addEventListener("click", function () {
+                    saveProfileEditor();
+                });
+            })();
+        </script>
+    </div>
+</body>
+</html>

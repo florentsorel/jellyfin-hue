@@ -1,0 +1,12 @@
+[
+  {
+    "guid": "c5fee93b-1c6d-4079-8799-9f7665a5ead5",
+    "name": "Philips Hue",
+    "description": "This plugin enables native integration with Philips Hue bridges in Jellyfin 12+ (CLIP API v2). It features multi-profile automations filtered by users, devices, and media types with smooth cinema fades on play, comfortable ambient dimming on pause, and previous state restoration on stop.",
+    "overview": "Synchronize Philips Hue smart lighting with Jellyfin playback states across custom profiles.",
+    "owner": "Florent Sorel",
+    "category": "General",
+    "imageUrl": "https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/Jellyfin.Plugin.Hue/hue_cover.jpg",
+    "versions": []
+  }
+]

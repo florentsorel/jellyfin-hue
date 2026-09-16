@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Jellyfin.Plugin.Template.Configuration;
+using Jellyfin.Plugin.Hue.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
+using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 
-namespace Jellyfin.Plugin.Template;
+namespace Jellyfin.Plugin.Hue;
 
 /// <summary>
-/// The main plugin.
+/// The main Philips Hue plugin.
 /// </summary>
-public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
+public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasEmbeddedImage
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -26,10 +27,19 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     }
 
     /// <inheritdoc />
-    public override string Name => "Template";
+    public override string Name => "Philips Hue";
 
     /// <inheritdoc />
-    public override Guid Id => Guid.Parse("eb5d7894-8eef-4b36-aa6f-5d124e828ce1");
+    public override string Description => "Synchronize Philips Hue smart lighting with Jellyfin playback states across custom profiles.";
+
+    /// <inheritdoc />
+    public override Guid Id => Guid.Parse("c5fee93b-1c6d-4079-8799-9f7665a5ead5");
+
+    /// <inheritdoc />
+    public string ImageResourceName => string.Format(
+        CultureInfo.InvariantCulture,
+        "{0}.hue_cover.jpg",
+        GetType().Namespace);
 
     /// <summary>
     /// Gets the current plugin instance.
@@ -44,8 +54,13 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             new PluginPageInfo
             {
                 Name = Name,
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", GetType().Namespace)
-            }
+                EmbeddedResourcePath = string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0}.Configuration.configPage.html",
+                    GetType().Namespace),
+                EnableInMainMenu = true,
+                DisplayName = "Philips Hue",
+            },
         ];
     }
 }

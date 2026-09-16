@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Jellyfin.Plugin.Hue/Jellyfin.Plugin.Hue.csproj" />
+  <Project Path="Jellyfin.Plugin.Hue.Tests/Jellyfin.Plugin.Hue.Tests.csproj" />
+</Solution>

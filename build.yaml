@@ -1,16 +1,19 @@
 ---
-name: "Template"
-guid: "eb5d7894-8eef-4b36-aa6f-5d124e828ce1"
-version: "1.0.0.0"
-targetAbi: "10.11.0.0"
-framework: "net9.0"
-overview: "Short description about your plugin"
+name: "Philips Hue"
+guid: "c5fee93b-1c6d-4079-8799-9f7665a5ead5"
+version: "12.0.0.0"
+targetAbi: "12.0.0.0"
+framework: "net10.0"
+imageUrl: "https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/Jellyfin.Plugin.Hue/hue_cover.jpg"
+overview: "Synchronize Philips Hue smart lighting with Jellyfin playback states across custom profiles."
 description: >
-  This is a longer description that can span more than one
-  line and include details about your plugin.
+  This plugin enables native integration with Philips Hue bridges in Jellyfin 12+ (CLIP API v2).
+  It features multi-profile automations filtered by users, devices, and media types with smooth
+  cinema fades on play, comfortable ambient dimming on pause, and previous state restoration on stop.
 category: "General"
-owner: "jellyfin"
+owner: "Florent Sorel"
 artifacts:
-- "Jellyfin.Plugin.Template.dll"
+- "Jellyfin.Plugin.Hue.dll"
+- "hue_cover.jpg"
 changelog: >
-  changelog
+  Initial release for Jellyfin 12.0.0+ (.NET 10) supporting Philips Hue CLIP API v2, multi-profile lighting control, and auto discovery.
