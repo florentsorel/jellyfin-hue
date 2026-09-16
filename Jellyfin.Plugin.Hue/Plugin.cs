@@ -13,7 +13,7 @@ namespace Jellyfin.Plugin.Hue;
 /// <summary>
 /// The main Philips Hue plugin.
 /// </summary>
-public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasEmbeddedImage
+public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -34,12 +34,6 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasEmbedde
 
     /// <inheritdoc />
     public override Guid Id => Guid.Parse("c5fee93b-1c6d-4079-8799-9f7665a5ead5");
-
-    /// <inheritdoc />
-    public string ImageResourceName => string.Format(
-        CultureInfo.InvariantCulture,
-        "{0}.hue_cover.jpg",
-        GetType().Namespace);
 
     /// <summary>
     /// Gets the current plugin instance.
