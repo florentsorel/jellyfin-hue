@@ -1,7 +1,7 @@
 ---
 name: "Philips Hue"
 guid: "c5fee93b-1c6d-4079-8799-9f7665a5ead5"
-version: "12.0.0.0"
+version: "12.0.1.0"
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 imageUrl: "https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/Jellyfin.Plugin.Hue/hue_cover.jpg"
@@ -16,4 +16,4 @@ artifacts:
 - "Jellyfin.Plugin.Hue.dll"
 - "hue_cover.jpg"
 changelog: >
-  Initial release for Jellyfin 12.0.0+ (.NET 10) supporting Philips Hue CLIP API v2, multi-profile lighting control, and auto discovery.
+  Add bridge and configurable time zone support for playback time filtering.

@@ -206,4 +206,43 @@ public class HueOrchestratorTests
 
         Assert.True(HueOrchestrator.MatchesTimeFilter(profile, new TimeOnly(15, 0)));
     }
+
+    [Fact]
+    public void GetCurrentTime_WithValidTimeZone_ReturnsConvertedTime()
+    {
+        var utcTime = HueOrchestrator.GetCurrentTime("UTC");
+        var expectedUtc = TimeOnly.FromDateTime(DateTime.UtcNow);
+        Assert.Equal(expectedUtc.Hour, utcTime.Hour);
+
+        var parisTz = TimeZoneInfo.FindSystemTimeZoneById("Europe/Paris");
+        var expectedParis = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, parisTz));
+        var actualParis = HueOrchestrator.GetCurrentTime("Europe/Paris");
+        Assert.Equal(expectedParis.Hour, actualParis.Hour);
+    }
+
+    [Fact]
+    public void GetCurrentTime_WithInvalidOrNullTimeZone_FallsBackToLocal()
+    {
+        var localTime = HueOrchestrator.GetCurrentTime(null);
+        var expected = TimeOnly.FromDateTime(DateTime.Now);
+        Assert.Equal(expected.Hour, localTime.Hour);
+
+        var invalidTzTime = HueOrchestrator.GetCurrentTime("NonExistent/TimeZone_12345");
+        Assert.Equal(expected.Hour, invalidTzTime.Hour);
+    }
+
+    [Fact]
+    public void MatchesTimeFilter_UsesSpecifiedTimeZone()
+    {
+        var profile = new HueProfile
+        {
+            EnableTimeFilter = true,
+            TimeFilterStart = "00:00",
+            TimeFilterEnd = "23:59",
+        };
+
+        // When time filter covers whole day, it matches regardless of timezone
+        Assert.True(HueOrchestrator.MatchesTimeFilter(profile, null, "Europe/Paris"));
+        Assert.True(HueOrchestrator.MatchesTimeFilter(profile, null, "UTC"));
+    }
 }

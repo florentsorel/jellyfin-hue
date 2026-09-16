@@ -119,7 +119,13 @@ public class HueOrchestrator
                 continue;
             }
 
-            if (!MatchesTimeFilter(profile))
+            var timeZoneId = config.TimeZoneId;
+            if (string.IsNullOrWhiteSpace(timeZoneId))
+            {
+                timeZoneId = _hueClient.CachedBridgeTimeZone;
+            }
+
+            if (!MatchesTimeFilter(profile, null, timeZoneId))
             {
                 continue;
             }
@@ -131,12 +137,36 @@ public class HueOrchestrator
     }
 
     /// <summary>
+    /// Gets the current time converted to the specified time zone (or system local time if null/invalid).
+    /// </summary>
+    /// <param name="timeZoneId">The IANA or Windows time zone ID (e.g. "Europe/Paris").</param>
+    /// <returns>The current time in the specified time zone.</returns>
+    public static TimeOnly GetCurrentTime(string? timeZoneId = null)
+    {
+        if (!string.IsNullOrWhiteSpace(timeZoneId))
+        {
+            try
+            {
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                return TimeOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz));
+            }
+            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+            {
+                // Fallback to local time below
+            }
+        }
+
+        return TimeOnly.FromDateTime(DateTime.Now);
+    }
+
+    /// <summary>
     /// Checks if the current time matches the profile's active time window filter.
     /// </summary>
     /// <param name="profile">The Hue profile.</param>
     /// <param name="currentTime">Optional specific time for unit testing.</param>
+    /// <param name="timeZoneId">Optional time zone identifier for timezone conversion.</param>
     /// <returns>True if within the allowed window or if time filter is disabled.</returns>
-    public static bool MatchesTimeFilter(HueProfile profile, TimeOnly? currentTime = null)
+    public static bool MatchesTimeFilter(HueProfile profile, TimeOnly? currentTime = null, string? timeZoneId = null)
     {
         ArgumentNullException.ThrowIfNull(profile);
 
@@ -156,7 +186,7 @@ public class HueOrchestrator
             return true;
         }
 
-        var now = currentTime ?? TimeOnly.FromDateTime(DateTime.Now);
+        var now = currentTime ?? GetCurrentTime(timeZoneId);
 
         if (start < end)
         {
@@ -239,6 +269,12 @@ public class HueOrchestrator
     {
         try
         {
+            var config = Plugin.Instance?.Configuration;
+            if (config != null && string.IsNullOrWhiteSpace(config.TimeZoneId) && string.IsNullOrWhiteSpace(_hueClient.CachedBridgeTimeZone))
+            {
+                await _hueClient.GetBridgeTimeZoneAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             var matchingProfiles = FindMatchingProfiles(session, item);
             if (matchingProfiles.Count == 0)
             {

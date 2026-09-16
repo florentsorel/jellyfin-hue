@@ -25,4 +25,10 @@ public class HueResourcesResponse
     /// </summary>
     [JsonPropertyName("lights")]
     public Collection<HueResourceItemDto> Lights { get; } = new();
+
+    /// <summary>
+    /// Gets or sets the detected Hue Bridge time zone (e.g. "Europe/Paris").
+    /// </summary>
+    [JsonPropertyName("bridgeTimeZone")]
+    public string? BridgeTimeZone { get; set; }
 }

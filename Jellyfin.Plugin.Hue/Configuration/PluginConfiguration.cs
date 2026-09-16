@@ -17,8 +17,14 @@ public class PluginConfiguration : BasePluginConfiguration
         BridgeIp = string.Empty;
         BridgeUsername = string.Empty;
         BridgeClientKey = string.Empty;
+        TimeZoneId = string.Empty;
         Profiles = Array.Empty<HueProfile>();
     }
+
+    /// <summary>
+    /// Gets or sets the configured IANA or Windows time zone identifier (e.g. "Europe/Paris") for time filter evaluation.
+    /// </summary>
+    public string TimeZoneId { get; set; }
 
     /// <summary>
     /// Gets or sets the IP address or hostname of the Philips Hue Bridge.

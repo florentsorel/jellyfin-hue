@@ -74,11 +74,17 @@ public class HueApiController : ControllerBase
         var result = await _hueClient.PairAsync(request.BridgeIp.Trim(), cancellationToken).ConfigureAwait(false);
         if (result.Success)
         {
+            var bridgeTz = await _hueClient.GetBridgeTimeZoneAsync(cancellationToken).ConfigureAwait(false);
             if (Plugin.Instance is { } plugin)
             {
                 plugin.Configuration.BridgeIp = request.BridgeIp.Trim();
                 plugin.Configuration.BridgeUsername = result.Username ?? string.Empty;
                 plugin.Configuration.BridgeClientKey = result.ClientKey ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(bridgeTz) && string.IsNullOrWhiteSpace(plugin.Configuration.TimeZoneId))
+                {
+                    plugin.Configuration.TimeZoneId = bridgeTz;
+                }
+
                 plugin.SaveConfiguration();
             }
 
@@ -87,6 +93,7 @@ public class HueApiController : ControllerBase
                 success = true,
                 username = result.Username,
                 clientKey = result.ClientKey,
+                bridgeTimeZone = bridgeTz,
             });
         }
 
@@ -168,6 +175,7 @@ public class HueApiController : ControllerBase
             });
         }
 
+        response.BridgeTimeZone = await _hueClient.GetBridgeTimeZoneAsync(cancellationToken).ConfigureAwait(false);
         return Ok(response);
     }
 
