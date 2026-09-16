@@ -7,9 +7,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <Version>10.11.0.0</Version>
-    <AssemblyVersion>10.11.0.0</AssemblyVersion>
-    <FileVersion>10.11.0.0</FileVersion>
+    <Version>10.11.1.0</Version>
+    <AssemblyVersion>10.11.1.0</AssemblyVersion>
+    <FileVersion>10.11.1.0</FileVersion>
     <Authors>Florent Sorel</Authors>
     <Description>Synchronize Philips Hue smart lighting with Jellyfin playback states across custom profiles.</Description>
     <PackageProjectUrl>https://github.com/florentsorel/jellyfin-hue</PackageProjectUrl>

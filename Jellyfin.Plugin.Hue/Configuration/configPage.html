@@ -451,8 +451,12 @@
                                 <div style="font-size:1.1em; font-weight:600; color:#e8f5e9;">
                                     ✓ <span data-i18n="connectedToBridge">Connected to Hue Bridge</span> (<span id="connectedBridgeIpText"></span>)
                                 </div>
-                                <div style="font-size:0.85em; color:#aaa; margin-top:0.2em;">
-                                    AppKey: <code id="connectedBridgeAppKeyText" style="color:#81c784;"></code>
+                                <div style="font-size:0.85em; color:#aaa; margin-top:0.35em; display:flex; align-items:center; gap:0.6em; flex-wrap:wrap;">
+                                    <span>AppKey: <code id="connectedBridgeAppKeyText" style="color:#81c784;"></code></span>
+                                    <span>•</span>
+                                    <label for="txtTimeZone" style="color:#aaa;"><span data-i18n="lblTimezone">Time zone</span>:</label>
+                                    <input is="emby-input" type="text" id="txtTimeZone" style="max-width:170px; font-size:0.85em; padding:0.15em 0.4em; height:auto; display:inline-block;" placeholder="Europe/Paris" />
+                                    <button is="emby-button" type="button" class="raised" id="btnSaveTimeZone" style="font-size:0.8em; padding:0.2em 0.6em; margin:0;" data-i18n="btnSaveTz">Save</button>
                                 </div>
                             </div>
                             <div style="display:flex; gap:0.5em;">
@@ -742,7 +746,9 @@
                         lblEnableTimeFilter: "Restreindre à une plage horaire",
                         lblTimeFilterStart: "De (heure de début)",
                         lblTimeFilterEnd: "À (heure de fin)",
-                        descTimeFilterActive: "Le profil ne se déclenchera qu'entre {0} et {1} (utile pour éviter d'allumer les lumières en plein jour).",
+                        descTimeFilterActive: "Le profil ne se déclenchera qu'entre {0} et {1} (fuseau : {2}).",
+                        lblTimezone: "Fuseau horaire",
+                        btnSaveTz: "Enregistrer",
                         timeAllDay: "24h/24",
                         sectionTargets: "💡 Cibles Hue",
                         lblTargetGroups: "Pièces & Zones ciblées",
@@ -858,7 +864,9 @@
                         lblEnableTimeFilter: "Restrict to active time range",
                         lblTimeFilterStart: "From (start time)",
                         lblTimeFilterEnd: "To (end time)",
-                        descTimeFilterActive: "Profile will only trigger between {0} and {1} (handy to avoid changing lights during daylight).",
+                        descTimeFilterActive: "Profile will only trigger between {0} and {1} (time zone: {2}).",
+                        lblTimezone: "Time zone",
+                        btnSaveTz: "Save",
                         timeAllDay: "All day (24/7)",
                         sectionTargets: "💡 Hue Targets",
                         lblTargetGroups: "Target Rooms & Zones",
@@ -1015,6 +1023,10 @@
                         connectedSec.style.display = "block";
                         document.getElementById("connectedBridgeIpText").textContent = currentConfig.BridgeIp;
                         document.getElementById("connectedBridgeAppKeyText").textContent = currentConfig.BridgeUsername;
+                        var tzInput = document.getElementById("txtTimeZone");
+                        if (tzInput) {
+                            tzInput.value = currentConfig.TimeZoneId || (currentResources && currentResources.bridgeTimeZone) || Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris";
+                        }
                         btnAdd.disabled = false;
                         btnAdd.style.opacity = "1";
                         btnAdd.style.cursor = "pointer";
@@ -1204,6 +1216,16 @@
                 function loadHueResources() {
                     return ApiClient.getJSON(ApiClient.getUrl("Hue/Resources")).then(function (res) {
                         currentResources = res || { rooms: [], zones: [], lights: [] };
+                        var detectedTz = currentResources.bridgeTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris";
+                        var tzInput = document.getElementById("txtTimeZone");
+                        if (tzInput && !tzInput.value) {
+                            tzInput.value = currentConfig.TimeZoneId || detectedTz;
+                        }
+                        if (!currentConfig.TimeZoneId && currentResources.bridgeTimeZone) {
+                            currentConfig.TimeZoneId = currentResources.bridgeTimeZone;
+                            if (tzInput) tzInput.value = currentConfig.TimeZoneId;
+                            saveConfig();
+                        }
                         return currentResources;
                     }).catch(function (err) {
                         console.warn("Could not fetch Hue resources:", err);
@@ -1502,8 +1524,9 @@
                     if (!startSel || !endSel || !desc) return;
                     var start = startSel.value;
                     var end = endSel.value;
-                    var tpl = t("descTimeFilterActive") || "Profile will only trigger between {0} and {1}.";
-                    desc.textContent = tpl.replace("{0}", start).replace("{1}", end);
+                    var tz = currentConfig.TimeZoneId || (currentResources && currentResources.bridgeTimeZone) || Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris";
+                    var tpl = t("descTimeFilterActive") || "Profile will only trigger between {0} and {1} (time zone: {2}).";
+                    desc.textContent = tpl.replace("{0}", start).replace("{1}", end).replace("{2}", tz);
                 }
 
                 var HUE_PRESET_COLORS = [
@@ -2240,6 +2263,16 @@
                         saveConfig();
                         renderConnectionState();
                         scanForBridges();
+                    }
+                });
+
+                document.getElementById("btnSaveTimeZone").addEventListener("click", function () {
+                    var val = document.getElementById("txtTimeZone").value.trim();
+                    if (val) {
+                        currentConfig.TimeZoneId = val;
+                        saveConfig();
+                        updateTimeFilterDesc();
+                        Dashboard.alert(t("saved") || "Saved");
                     }
                 });
 

@@ -44,6 +44,11 @@ public class HueClient
     }
 
     /// <summary>
+    /// Gets the cached bridge time zone (e.g. "Europe/Paris").
+    /// </summary>
+    public string? CachedBridgeTimeZone { get; internal set; }
+
+    /// <summary>
     /// Attempts to pair with the Hue Bridge by requesting an application key (link button must be pressed).
     /// </summary>
     /// <param name="bridgeIp">The IP address of the Hue Bridge.</param>
@@ -93,6 +98,61 @@ public class HueClient
             _logger.LogError(ex, "Exception while attempting to pair with Hue Bridge at {BridgeIp}", safeIp);
             return (false, null, null, ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Fetches the configured time zone from the Hue Bridge via CLIP API v2.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The IANA time zone identifier (e.g. "Europe/Paris") or null if unavailable.</returns>
+    public virtual async Task<string?> GetBridgeTimeZoneAsync(CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrWhiteSpace(CachedBridgeTimeZone))
+        {
+            return CachedBridgeTimeZone;
+        }
+
+        var config = Plugin.Instance?.Configuration;
+        if (config == null || string.IsNullOrWhiteSpace(config.BridgeIp) || string.IsNullOrWhiteSpace(config.BridgeUsername))
+        {
+            return null;
+        }
+
+        try
+        {
+            var uri = new Uri($"https://{config.BridgeIp}/clip/v2/resource/bridge");
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Add("hue-application-key", config.BridgeUsername);
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            using var doc = JsonDocument.Parse(content);
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.GetArrayLength() > 0)
+            {
+                var first = data[0];
+                if (first.TryGetProperty("time_zone", out var tzObj) && tzObj.TryGetProperty("time_zone", out var tzVal))
+                {
+                    var tz = tzVal.GetString();
+                    if (!string.IsNullOrWhiteSpace(tz))
+                    {
+                        CachedBridgeTimeZone = tz;
+                        _logger.LogInformation("Retrieved Hue Bridge time zone: {TimeZone}", tz);
+                        return tz;
+                    }
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Failed to retrieve Hue Bridge time zone");
+        }
+
+        return null;
     }
 
     /// <summary>
