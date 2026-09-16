@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/Jellyfin.Plugin.Hue/hue_cover.jpg",
     "versions": [
       {
+        "version": "10.11.1.0",
+        "changelog": "Release v10.11.1.0",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/florentsorel/jellyfin-hue/releases/download/v10.11.1.0/jellyfin-plugin-hue_10.11.1.0.zip",
+        "checksum": "5fd3a685250a85499eeced10c4fce681",
+        "timestamp": "2026-09-16T21:30:51.289Z"
+      },
+      {
         "version": "12.0.0.0",
         "changelog": "- Initial release for Jellyfin 12+ (.NET 10)\n- Native Philips Hue CLIP API v2 integration\n- Playback synchronization (cinema fades, pause dimming, state restoration)\n- Multi-profile support filtered by users, devices, and media types",
         "targetAbi": "12.0.0.0",
