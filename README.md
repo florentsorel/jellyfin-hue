@@ -80,7 +80,7 @@ A native **Philips Hue** integration plugin for **Jellyfin 12+** that automatica
 
 This repository aligns its versions directly with Jellyfin targets:
 - **Jellyfin 12+ (.NET 10)**: `master` branch -> Releases `12.x.x.x`
-- **Jellyfin 10.11 (.NET 9)**: `v10.x` branch -> Releases `10.x.x.x`
+- **Jellyfin 10.11 (.NET 9)**: `v10.11` branch -> Releases `10.11.x.x`
 
 ---
 
