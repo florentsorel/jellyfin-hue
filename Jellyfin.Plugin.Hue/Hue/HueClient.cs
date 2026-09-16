@@ -87,7 +87,7 @@ public class HueClient
 
             return (false, null, null, "Unexpected response from Hue Bridge");
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             var safeIp = SanitizeForLog(bridgeIp);
             _logger.LogError(ex, "Exception while attempting to pair with Hue Bridge at {BridgeIp}", safeIp);
@@ -186,7 +186,7 @@ public class HueClient
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Failed to apply action {ActionType} for profile {ProfileName}", actionType, profile.Name);
         }
@@ -283,7 +283,7 @@ public class HueClient
 
             return true;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Failed to test profile {ProfileName}", profile.Name);
             return false;
@@ -397,7 +397,7 @@ public class HueClient
                 };
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Failed to capture current lights state before playback start");
         }
@@ -483,7 +483,7 @@ public class HueClient
                 content.Length);
             return result?.Data ?? new Collection<T>();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Failed to retrieve Hue resources from {Resource}", resourcePath);
             return new Collection<T>();
@@ -511,7 +511,7 @@ public class HueClient
             using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             var safePath = SanitizeForLog(resourceSubPath);
             _logger.LogError(ex, "Failed to update Hue resource at {ResourceSubPath}", safePath);

@@ -256,7 +256,7 @@ public class HueOrchestrator
                 await _hueClient.ApplyActionAsync(profile, actionType, cancellationToken).ConfigureAwait(false);
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error while processing {ActionType} in HueOrchestrator", actionType);
         }

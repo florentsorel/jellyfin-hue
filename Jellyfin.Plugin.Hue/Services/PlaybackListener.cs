@@ -70,7 +70,7 @@ public class PlaybackListener : IHostedService, IDisposable
             {
                 await _orchestrator.HandlePlayAsync(e.Session, e.Item).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError(ex, "Error handling playback start event");
             }
@@ -105,7 +105,7 @@ public class PlaybackListener : IHostedService, IDisposable
                         await _orchestrator.HandleResumeAsync(e.Session, e.Item).ConfigureAwait(false);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     _logger.LogError(ex, "Error handling playback progress pause/resume event");
                 }
@@ -126,7 +126,7 @@ public class PlaybackListener : IHostedService, IDisposable
             {
                 await _orchestrator.HandleStopAsync(e.Session, e.Item).ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError(ex, "Error handling playback stopped event");
             }

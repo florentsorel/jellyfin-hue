@@ -51,7 +51,7 @@ public class HueDiscovery
                 discovered[b.InternalIpAddress] = b;
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogDebug(ex, "Local mDNS discovery returned an error");
         }
@@ -71,7 +71,7 @@ public class HueDiscovery
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogWarning(ex, "Cloud discovery failed or was rate-limited");
             }
@@ -138,7 +138,7 @@ public class HueDiscovery
             {
                 break;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogDebug(ex, "Error reading mDNS packet");
                 break;
@@ -164,7 +164,7 @@ public class HueDiscovery
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogDebug(ex, "Could not fetch bridgeid from {Ip}", ip);
         }
