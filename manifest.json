@@ -10,7 +10,7 @@
     "versions": [
       {
         "version": "12.0.0.0",
-        "changelog": "- Update dependency Jellyfin.Model to 12.1.0\n- Update dependency Microsoft.NET.Test.Sdk to 18.10.1\n- @renovate[bot] made their first contribution in https://github.com/florentsorel/jellyfin-hue/pull/7",
+        "changelog": "- Initial release for Jellyfin 12+ (.NET 10)\n- Native Philips Hue CLIP API v2 integration\n- Playback synchronization (cinema fades, pause dimming, state restoration)\n- Multi-profile support filtered by users, devices, and media types",
         "targetAbi": "12.0.0.0",
         "sourceUrl": "https://github.com/florentsorel/jellyfin-hue/releases/download/v12.0.0.0/jellyfin-plugin-hue_12.0.0.0.zip",
         "checksum": "763e09b965b78da533e418f617ce634f",
@@ -18,7 +18,7 @@
       },
       {
         "version": "10.11.0.0",
-        "changelog": "- Update dependency Jellyfin.Model to 12.1.0\n- Update dependency Microsoft.NET.Test.Sdk to 18.10.1\n- @renovate[bot] made their first contribution in https://github.com/florentsorel/jellyfin-hue/pull/7",
+        "changelog": "- Initial release for Jellyfin 10.11 (.NET 9)\n- Native Philips Hue CLIP API v2 integration\n- Playback synchronization (cinema fades, pause dimming, state restoration)\n- Multi-profile support filtered by users, devices, and media types",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/florentsorel/jellyfin-hue/releases/download/v10.11.0.0/jellyfin-plugin-hue_10.11.0.0.zip",
         "checksum": "7c4285414f0b7d77943b314c597f8407",
