@@ -7,6 +7,15 @@
     "owner": "Florent Sorel",
     "category": "General",
     "imageUrl": "https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/Jellyfin.Plugin.Hue/hue_cover.jpg",
-    "versions": []
+    "versions": [
+      {
+        "version": "10.11.0.0",
+        "changelog": "- Update dependency Jellyfin.Model to 12.1.0\n- Update dependency Microsoft.NET.Test.Sdk to 18.10.1\n- @renovate[bot] made their first contribution in https://github.com/florentsorel/jellyfin-hue/pull/7",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/florentsorel/jellyfin-hue/releases/download/v10.11.0.0/jellyfin-plugin-hue_10.11.0.0.zip",
+        "checksum": "7c4285414f0b7d77943b314c597f8407",
+        "timestamp": "2026-09-16T17:20:48.978Z"
+      }
+    ]
   }
 ]
