@@ -208,6 +208,11 @@ public class HueOrchestrator
             string.Equals(u.Replace("-", string.Empty, StringComparison.OrdinalIgnoreCase), userIdString, StringComparison.OrdinalIgnoreCase));
     }
 
+    private static bool MatchesTarget(string target, string? value)
+    {
+        return !string.IsNullOrWhiteSpace(value) && string.Equals(target, value, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool MatchesDeviceFilter(HueProfile profile, SessionInfo? session)
     {
         if (profile.TargetDeviceIds == null || profile.TargetDeviceIds.Length == 0)
@@ -225,9 +230,9 @@ public class HueOrchestrator
         var deviceName = session.DeviceName;
 
         return profile.TargetDeviceIds.Any(target =>
-            (!string.IsNullOrWhiteSpace(deviceId) && string.Equals(target, deviceId, StringComparison.OrdinalIgnoreCase)) ||
-            (!string.IsNullOrWhiteSpace(client) && string.Equals(target, client, StringComparison.OrdinalIgnoreCase)) ||
-            (!string.IsNullOrWhiteSpace(deviceName) && string.Equals(target, deviceName, StringComparison.OrdinalIgnoreCase)));
+            MatchesTarget(target, deviceId) ||
+            MatchesTarget(target, client) ||
+            MatchesTarget(target, deviceName));
     }
 
     private async Task EvaluateAndApplyAsync(SessionInfo? session, BaseItem? item, string actionType, CancellationToken cancellationToken)

@@ -36,7 +36,7 @@ public static class ColorUtils
 
             return RgbToXy(r, g, b);
         }
-        catch
+        catch (Exception ex) when (ex is FormatException or OverflowException or ArgumentOutOfRangeException)
         {
             return new HueXyPoint { X = 0.4578, Y = 0.41 };
         }

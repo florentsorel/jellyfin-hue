@@ -74,13 +74,12 @@ public class HueApiController : ControllerBase
         var result = await _hueClient.PairAsync(request.BridgeIp.Trim(), cancellationToken).ConfigureAwait(false);
         if (result.Success)
         {
-            var config = Plugin.Instance?.Configuration;
-            if (config != null)
+            if (Plugin.Instance is { } plugin)
             {
-                config.BridgeIp = request.BridgeIp.Trim();
-                config.BridgeUsername = result.Username ?? string.Empty;
-                config.BridgeClientKey = result.ClientKey ?? string.Empty;
-                Plugin.Instance?.SaveConfiguration();
+                plugin.Configuration.BridgeIp = request.BridgeIp.Trim();
+                plugin.Configuration.BridgeUsername = result.Username ?? string.Empty;
+                plugin.Configuration.BridgeClientKey = result.ClientKey ?? string.Empty;
+                plugin.SaveConfiguration();
             }
 
             return Ok(new

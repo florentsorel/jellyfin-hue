@@ -60,7 +60,7 @@ public class HueClient
                 generateclientkey = true,
             };
 
-            var request = new HttpRequestMessage(HttpMethod.Post, uri)
+            using var request = new HttpRequestMessage(HttpMethod.Post, uri)
             {
                 Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"),
             };
@@ -69,12 +69,13 @@ public class HueClient
             var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             var items = JsonSerializer.Deserialize<List<HuePairResponseItem>>(content, JsonOptions);
+            var safeIp = SanitizeForLog(bridgeIp);
             if (items != null && items.Count > 0)
             {
                 var first = items[0];
                 if (first.Success != null && !string.IsNullOrWhiteSpace(first.Success.Username))
                 {
-                    _logger.LogInformation("Successfully paired with Hue Bridge at {BridgeIp}", bridgeIp);
+                    _logger.LogInformation("Successfully paired with Hue Bridge at {BridgeIp}", safeIp);
                     return (true, first.Success.Username, first.Success.ClientKey, null);
                 }
 
@@ -88,7 +89,8 @@ public class HueClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception while attempting to pair with Hue Bridge at {BridgeIp}", bridgeIp);
+            var safeIp = SanitizeForLog(bridgeIp);
+            _logger.LogError(ex, "Exception while attempting to pair with Hue Bridge at {BridgeIp}", safeIp);
             return (false, null, null, ex.Message);
         }
     }
@@ -511,8 +513,20 @@ public class HueClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update Hue resource at {ResourceSubPath}", resourceSubPath);
+            var safePath = SanitizeForLog(resourceSubPath);
+            _logger.LogError(ex, "Failed to update Hue resource at {ResourceSubPath}", safePath);
             return false;
         }
+    }
+
+    private static string SanitizeForLog(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
+        return input.Replace("\r", string.Empty, StringComparison.Ordinal)
+                    .Replace("\n", string.Empty, StringComparison.Ordinal);
     }
 }
