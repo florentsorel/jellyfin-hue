@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/Jellyfin.Plugin.Hue/hue_cover.jpg",
     "versions": [
       {
+        "version": "12.0.4.0",
+        "changelog": "- chore: bump version to 12.0.4.0",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/florentsorel/jellyfin-hue/releases/download/v12.0.4.0/jellyfin-plugin-hue_12.0.4.0.zip",
+        "checksum": "fe8c071245005ae888c9a3d24df55e7a",
+        "timestamp": "2026-11-03T17:21:58.985Z"
+      },
+      {
         "version": "12.0.1.0",
         "changelog": "Release v12.0.1.0",
         "targetAbi": "12.0.0.0",
