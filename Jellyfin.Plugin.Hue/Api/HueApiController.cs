@@ -239,55 +239,31 @@ public class HueApiController : ControllerBase
 
         if (scene.Palette != null)
         {
-            foreach (var c in scene.Palette.Color)
-            {
-                if (c.Color?.Xy != null)
-                {
-                    var hex = ColorUtils.XyToHex(c.Color.Xy);
-                    if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
-                    {
-                        colors.Add(hex);
-                    }
-                }
-            }
+            colors.AddRange(scene.Palette.Color
+                .Where(c => c.Color?.Xy != null)
+                .Select(c => ColorUtils.XyToHex(c.Color!.Xy))
+                .Distinct(StringComparer.OrdinalIgnoreCase));
 
             if (colors.Count == 0)
             {
-                foreach (var ct in scene.Palette.ColorTemperature)
-                {
-                    if (ct.ColorTemperature?.Mirek != null)
-                    {
-                        var hex = ColorUtils.MirekToHex(ct.ColorTemperature.Mirek.Value);
-                        if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
-                        {
-                            colors.Add(hex);
-                        }
-                    }
-                }
+                colors.AddRange(scene.Palette.ColorTemperature
+                    .Where(ct => ct.ColorTemperature?.Mirek != null)
+                    .Select(ct => ColorUtils.MirekToHex(ct.ColorTemperature!.Mirek!.Value))
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
             }
         }
 
         if (colors.Count == 0 && scene.Actions.Count > 0)
         {
-            foreach (var act in scene.Actions)
-            {
-                if (act.Action?.Color?.Xy != null)
-                {
-                    var hex = ColorUtils.XyToHex(act.Action.Color.Xy);
-                    if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
-                    {
-                        colors.Add(hex);
-                    }
-                }
-                else if (act.Action?.ColorTemperature?.Mirek != null)
-                {
-                    var hex = ColorUtils.MirekToHex(act.Action.ColorTemperature.Mirek.Value);
-                    if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
-                    {
-                        colors.Add(hex);
-                    }
-                }
-            }
+            colors.AddRange(scene.Actions
+                .Select(act => act.Action?.Color?.Xy != null
+                    ? ColorUtils.XyToHex(act.Action.Color.Xy)
+                    : (act.Action?.ColorTemperature?.Mirek != null
+                        ? ColorUtils.MirekToHex(act.Action.ColorTemperature.Mirek.Value)
+                        : null))
+                .Where(hex => !string.IsNullOrEmpty(hex))
+                .Select(hex => hex!)
+                .Distinct(StringComparer.OrdinalIgnoreCase));
         }
 
         if (colors.Count == 0)
