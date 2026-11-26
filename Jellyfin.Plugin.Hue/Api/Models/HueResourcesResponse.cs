@@ -27,6 +27,12 @@ public class HueResourcesResponse
     public Collection<HueResourceItemDto> Lights { get; } = new();
 
     /// <summary>
+    /// Gets the available scenes.
+    /// </summary>
+    [JsonPropertyName("scenes")]
+    public Collection<HueSceneItemDto> Scenes { get; } = new();
+
+    /// <summary>
     /// Gets or sets the detected Hue Bridge time zone (e.g. "Europe/Paris").
     /// </summary>
     [JsonPropertyName("bridgeTimeZone")]
