@@ -128,6 +128,47 @@ public class HueClientTests
         Assert.Contains("\"brightness\":15", capturedBody);
         Assert.Contains("\"duration\":2500", capturedBody);
     }
+
+    [Fact]
+    public async Task ApplyActionAsync_WhenSceneConfigured_RecallsSceneInsteadOfLightPayload()
+    {
+        string capturedBody = string.Empty;
+        var handler = new MockHttpMessageHandler(req =>
+        {
+            if (req.Content != null)
+            {
+                capturedBody = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"data\":[]}"),
+            };
+        });
+
+        var config = new PluginConfiguration
+        {
+            BridgeIp = "192.168.1.100",
+            BridgeUsername = "valid-user",
+        };
+        PluginTestHelper.CreateMockPlugin(config);
+
+        var client = new HueClient(new HttpClient(handler), NullLogger<HueClient>.Instance);
+        var profile = new HueProfile
+        {
+            TargetGroupIds = new[] { "group-1" },
+            PlaySceneId = "scene-cinema-123",
+            PlayTransitionDurationMs = 3500,
+            RestoreStateOnStop = false,
+        };
+
+        await client.ApplyActionAsync(profile, "Play");
+
+        Assert.Single(handler.Requests);
+        Assert.Contains("scene/scene-cinema-123", handler.Requests[0].RequestUri?.ToString());
+        Assert.Contains("\"action\":\"active\"", capturedBody);
+        Assert.Contains("\"duration\":3500", capturedBody);
+    }
 }
 
 internal static class HeaderTestExtensions

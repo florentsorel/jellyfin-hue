@@ -28,19 +28,23 @@ public class HueProfile
         TargetGroupIds = Array.Empty<string>();
         TargetLightIds = Array.Empty<string>();
 
+        PlaySceneId = string.Empty;
         PlayBrightness = 0;
         PlayColorHex = "#FFB366";
         PlayTransitionDurationMs = 4000;
 
+        PauseSceneId = string.Empty;
         PauseBrightness = 25;
         PauseColorHex = "#FFB366";
         PauseTransitionDurationMs = 1000;
 
         ResumeSameAsPlay = true;
+        ResumeSceneId = string.Empty;
         ResumeBrightness = 0;
         ResumeTransitionDurationMs = 3000;
 
         RestoreStateOnStop = true;
+        StopSceneId = string.Empty;
         StopBrightness = 80;
         StopColorHex = "#FFFFFF";
         StopTransitionDurationMs = 2000;
@@ -111,6 +115,11 @@ public class HueProfile
     public string[] TargetLightIds { get; set; }
 
     /// <summary>
+    /// Gets or sets the optional Hue Scene ID to activate on play (overrides brightness and color if set).
+    /// </summary>
+    public string PlaySceneId { get; set; }
+
+    /// <summary>
     /// Gets or sets the brightness percentage on play (0 = turned off).
     /// </summary>
     public int PlayBrightness { get; set; }
@@ -124,6 +133,11 @@ public class HueProfile
     /// Gets or sets the transition duration on play in milliseconds.
     /// </summary>
     public int PlayTransitionDurationMs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional Hue Scene ID to activate on pause (overrides brightness and color if set).
+    /// </summary>
+    public string PauseSceneId { get; set; }
 
     /// <summary>
     /// Gets or sets the brightness percentage on pause.
@@ -146,6 +160,11 @@ public class HueProfile
     public bool ResumeSameAsPlay { get; set; }
 
     /// <summary>
+    /// Gets or sets the optional Hue Scene ID to activate on resume when not using play settings.
+    /// </summary>
+    public string ResumeSceneId { get; set; }
+
+    /// <summary>
     /// Gets or sets the brightness percentage on resume.
     /// </summary>
     public int ResumeBrightness { get; set; }
@@ -159,6 +178,11 @@ public class HueProfile
     /// Gets or sets a value indicating whether previous light states should be restored on stop.
     /// </summary>
     public bool RestoreStateOnStop { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional Hue Scene ID to activate on stop when not restoring state.
+    /// </summary>
+    public string StopSceneId { get; set; }
 
     /// <summary>
     /// Gets or sets the brightness percentage on stop when not restoring state.
