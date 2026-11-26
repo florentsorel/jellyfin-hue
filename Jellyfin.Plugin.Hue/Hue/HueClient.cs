@@ -196,6 +196,16 @@ public class HueClient
     }
 
     /// <summary>
+    /// Fetches all scene resources from the Hue Bridge.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of scene resources.</returns>
+    public async Task<Collection<HueSceneResource>> GetScenesAsync(CancellationToken cancellationToken = default)
+    {
+        return await GetResourcesAsync<HueSceneResource>("scene", cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Applies light settings to the specified targets (rooms, zones, individual lights) based on profile action.
     /// </summary>
     /// <param name="profile">The active profile.</param>
@@ -220,18 +230,15 @@ public class HueClient
                     await CaptureCurrentStateAsync(profile, cancellationToken).ConfigureAwait(false);
                 }
 
-                var payload = BuildPlayPayload(profile);
-                await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+                await ExecutePlayActionAsync(profile, cancellationToken).ConfigureAwait(false);
             }
             else if (string.Equals(actionType, "Pause", StringComparison.OrdinalIgnoreCase))
             {
-                var payload = BuildPausePayload(profile);
-                await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+                await ExecutePauseActionAsync(profile, cancellationToken).ConfigureAwait(false);
             }
             else if (string.Equals(actionType, "Resume", StringComparison.OrdinalIgnoreCase))
             {
-                var payload = BuildResumePayload(profile);
-                await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+                await ExecuteResumeActionAsync(profile, cancellationToken).ConfigureAwait(false);
             }
             else if (string.Equals(actionType, "Stop", StringComparison.OrdinalIgnoreCase))
             {
@@ -241,8 +248,7 @@ public class HueClient
                 }
                 else
                 {
-                    var payload = BuildStopPayload(profile);
-                    await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+                    await ExecuteStopActionAsync(profile, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -302,20 +308,17 @@ public class HueClient
             await CaptureCurrentStateAsync(profile, cancellationToken).ConfigureAwait(false);
 
             // 2. Step 1: Lecture (Play)
-            var playPayload = BuildPlayPayload(profile);
-            await DispatchPayloadAsync(profile, playPayload, cancellationToken).ConfigureAwait(false);
+            await ExecutePlayActionAsync(profile, cancellationToken).ConfigureAwait(false);
             var playWaitMs = Math.Max(profile.PlayTransitionDurationMs + 2000, 2500);
             await Task.Delay(playWaitMs, cancellationToken).ConfigureAwait(false);
 
             // 3. Step 2: Pause
-            var pausePayload = BuildPausePayload(profile);
-            await DispatchPayloadAsync(profile, pausePayload, cancellationToken).ConfigureAwait(false);
+            await ExecutePauseActionAsync(profile, cancellationToken).ConfigureAwait(false);
             var pauseWaitMs = Math.Max(profile.PauseTransitionDurationMs + 2000, 2500);
             await Task.Delay(pauseWaitMs, cancellationToken).ConfigureAwait(false);
 
             // 4. Step 3: Reprise (Resume)
-            var resumePayload = BuildResumePayload(profile);
-            await DispatchPayloadAsync(profile, resumePayload, cancellationToken).ConfigureAwait(false);
+            await ExecuteResumeActionAsync(profile, cancellationToken).ConfigureAwait(false);
             var resumeDuration = profile.ResumeSameAsPlay ? profile.PlayTransitionDurationMs : profile.ResumeTransitionDurationMs;
             var resumeWaitMs = Math.Max(resumeDuration + 2000, 2500);
             await Task.Delay(resumeWaitMs, cancellationToken).ConfigureAwait(false);
@@ -330,9 +333,8 @@ public class HueClient
             }
             else
             {
-                // Appliquer l'état d'arrêt configuré (luminosité/couleur)
-                var stopPayload = BuildStopPayload(profile);
-                await DispatchPayloadAsync(profile, stopPayload, cancellationToken).ConfigureAwait(false);
+                // Appliquer l'état d'arrêt configuré (luminosité/couleur ou scène)
+                await ExecuteStopActionAsync(profile, cancellationToken).ConfigureAwait(false);
                 var stopWaitMs = Math.Max(profile.StopTransitionDurationMs + 2000, 2500);
                 await Task.Delay(stopWaitMs, cancellationToken).ConfigureAwait(false);
 
@@ -348,6 +350,77 @@ public class HueClient
             _logger.LogError(ex, "Failed to test profile {ProfileName}", profile.Name);
             return false;
         }
+    }
+
+    private async Task ExecutePlayActionAsync(HueProfile profile, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.PlaySceneId))
+        {
+            await RecallSceneAsync(profile.PlaySceneId, profile.PlayTransitionDurationMs, profile.PlayBrightness, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var payload = BuildPlayPayload(profile);
+        await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task ExecutePauseActionAsync(HueProfile profile, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.PauseSceneId))
+        {
+            await RecallSceneAsync(profile.PauseSceneId, profile.PauseTransitionDurationMs, profile.PauseBrightness, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var payload = BuildPausePayload(profile);
+        await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task ExecuteResumeActionAsync(HueProfile profile, CancellationToken cancellationToken)
+    {
+        if (profile.ResumeSameAsPlay)
+        {
+            await ExecutePlayActionAsync(profile, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.ResumeSceneId))
+        {
+            await RecallSceneAsync(profile.ResumeSceneId, profile.ResumeTransitionDurationMs, profile.ResumeBrightness, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var payload = BuildResumePayload(profile);
+        await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task ExecuteStopActionAsync(HueProfile profile, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.StopSceneId))
+        {
+            await RecallSceneAsync(profile.StopSceneId, profile.StopTransitionDurationMs, profile.StopBrightness, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var payload = BuildStopPayload(profile);
+        await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> RecallSceneAsync(string sceneId, int durationMs, int brightness, CancellationToken cancellationToken)
+    {
+        var payload = new HueSceneRecallPayload
+        {
+            Recall = new HueSceneRecallState
+            {
+                Action = "active",
+                Duration = durationMs > 0 ? durationMs : null,
+                Dimming = brightness > 0
+                    ? new HueDimmingState { Brightness = Math.Clamp(brightness, 1, 100) }
+                    : null,
+            },
+        };
+
+        return await PutResourcePayloadAsync($"scene/{sceneId.Trim()}", payload, cancellationToken).ConfigureAwait(false);
     }
 
     private static HueLightUpdatePayload BuildPlayPayload(HueProfile profile)
@@ -550,7 +623,12 @@ public class HueClient
         }
     }
 
-    private async Task<bool> PutResourceAsync(string resourceSubPath, HueLightUpdatePayload payload, CancellationToken cancellationToken)
+    private Task<bool> PutResourceAsync(string resourceSubPath, HueLightUpdatePayload payload, CancellationToken cancellationToken)
+    {
+        return PutResourcePayloadAsync(resourceSubPath, payload, cancellationToken);
+    }
+
+    private async Task<bool> PutResourcePayloadAsync<TPayload>(string resourceSubPath, TPayload payload, CancellationToken cancellationToken)
     {
         var config = Plugin.Instance?.Configuration;
         if (config == null || string.IsNullOrWhiteSpace(config.BridgeIp) || string.IsNullOrWhiteSpace(config.BridgeUsername))
