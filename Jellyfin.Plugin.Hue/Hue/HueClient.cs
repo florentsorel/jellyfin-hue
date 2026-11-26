@@ -356,7 +356,7 @@ public class HueClient
     {
         if (!string.IsNullOrWhiteSpace(profile.PlaySceneId))
         {
-            await RecallSceneAsync(profile.PlaySceneId, profile.PlayTransitionDurationMs, cancellationToken).ConfigureAwait(false);
+            await RecallSceneAsync(profile.PlaySceneId, profile.PlayTransitionDurationMs, profile.PlayBrightness, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -368,7 +368,7 @@ public class HueClient
     {
         if (!string.IsNullOrWhiteSpace(profile.PauseSceneId))
         {
-            await RecallSceneAsync(profile.PauseSceneId, profile.PauseTransitionDurationMs, cancellationToken).ConfigureAwait(false);
+            await RecallSceneAsync(profile.PauseSceneId, profile.PauseTransitionDurationMs, profile.PauseBrightness, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -386,7 +386,7 @@ public class HueClient
 
         if (!string.IsNullOrWhiteSpace(profile.ResumeSceneId))
         {
-            await RecallSceneAsync(profile.ResumeSceneId, profile.ResumeTransitionDurationMs, cancellationToken).ConfigureAwait(false);
+            await RecallSceneAsync(profile.ResumeSceneId, profile.ResumeTransitionDurationMs, profile.ResumeBrightness, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -398,7 +398,7 @@ public class HueClient
     {
         if (!string.IsNullOrWhiteSpace(profile.StopSceneId))
         {
-            await RecallSceneAsync(profile.StopSceneId, profile.StopTransitionDurationMs, cancellationToken).ConfigureAwait(false);
+            await RecallSceneAsync(profile.StopSceneId, profile.StopTransitionDurationMs, profile.StopBrightness, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -406,7 +406,7 @@ public class HueClient
         await DispatchPayloadAsync(profile, payload, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<bool> RecallSceneAsync(string sceneId, int durationMs, CancellationToken cancellationToken)
+    private async Task<bool> RecallSceneAsync(string sceneId, int durationMs, int brightness, CancellationToken cancellationToken)
     {
         var payload = new HueSceneRecallPayload
         {
@@ -414,6 +414,9 @@ public class HueClient
             {
                 Action = "active",
                 Duration = durationMs > 0 ? durationMs : null,
+                Dimming = brightness > 0
+                    ? new HueDimmingState { Brightness = Math.Clamp(brightness, 1, 100) }
+                    : null,
             },
         };
 

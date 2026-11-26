@@ -206,13 +206,20 @@ public class HueApiController : ControllerBase
                     groupedLightId = s.Group.Rid;
                 }
 
-                return new HueSceneItemDto
+                var dto = new HueSceneItemDto
                 {
                     Id = s.Id,
                     Name = s.Metadata?.Name ?? "Scene",
                     GroupId = groupedLightId,
                     GroupName = groupName,
                 };
+
+                foreach (var hex in ExtractScenePaletteColors(s))
+                {
+                    dto.PaletteColors.Add(hex);
+                }
+
+                return dto;
             })
             .OrderBy(s => s.GroupName ?? string.Empty, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase);
@@ -224,6 +231,71 @@ public class HueApiController : ControllerBase
 
         response.BridgeTimeZone = await _hueClient.GetBridgeTimeZoneAsync(cancellationToken).ConfigureAwait(false);
         return Ok(response);
+    }
+
+    private static List<string> ExtractScenePaletteColors(Jellyfin.Plugin.Hue.Hue.Models.HueSceneResource scene)
+    {
+        var colors = new List<string>();
+
+        if (scene.Palette != null)
+        {
+            foreach (var c in scene.Palette.Color)
+            {
+                if (c.Color?.Xy != null)
+                {
+                    var hex = ColorUtils.XyToHex(c.Color.Xy);
+                    if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
+                    {
+                        colors.Add(hex);
+                    }
+                }
+            }
+
+            if (colors.Count == 0)
+            {
+                foreach (var ct in scene.Palette.ColorTemperature)
+                {
+                    if (ct.ColorTemperature?.Mirek != null)
+                    {
+                        var hex = ColorUtils.MirekToHex(ct.ColorTemperature.Mirek.Value);
+                        if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
+                        {
+                            colors.Add(hex);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (colors.Count == 0 && scene.Actions.Count > 0)
+        {
+            foreach (var act in scene.Actions)
+            {
+                if (act.Action?.Color?.Xy != null)
+                {
+                    var hex = ColorUtils.XyToHex(act.Action.Color.Xy);
+                    if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
+                    {
+                        colors.Add(hex);
+                    }
+                }
+                else if (act.Action?.ColorTemperature?.Mirek != null)
+                {
+                    var hex = ColorUtils.MirekToHex(act.Action.ColorTemperature.Mirek.Value);
+                    if (!colors.Contains(hex, StringComparer.OrdinalIgnoreCase))
+                    {
+                        colors.Add(hex);
+                    }
+                }
+            }
+        }
+
+        if (colors.Count == 0)
+        {
+            colors.Add("#FFB366");
+        }
+
+        return colors.Take(5).ToList();
     }
 
     /// <summary>

@@ -19,4 +19,11 @@ public class HueSceneRecallState
     [JsonPropertyName("duration")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Duration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional dimming override for the recalled scene.
+    /// </summary>
+    [JsonPropertyName("dimming")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public HueDimmingState? Dimming { get; set; }
 }

@@ -132,4 +132,99 @@ public static class ColorUtils
         var mirek = (int)Math.Round(500 - ((ratio - 0.2) / 1.3 * (500 - 153)));
         return Math.Clamp(mirek, 153, 500);
     }
+
+    /// <summary>
+    /// Converts Hue CIE 1931 XY coordinates to a Hex color string (e.g. "#FFB366").
+    /// </summary>
+    /// <param name="xy">The XY coordinates.</param>
+    /// <returns>A hex color string.</returns>
+    public static string XyToHex(HueXyPoint? xy)
+    {
+        if (xy == null || xy.Y <= 0.0001)
+        {
+            return "#FFB366";
+        }
+
+        double x = xy.X;
+        double y = xy.Y;
+        double z = 1.0 - x - y;
+
+        double bigY = 1.0;
+        double bigX = (bigY / y) * x;
+        double bigZ = (bigY / y) * z;
+
+        // Wide RGB D65 reverse matrix
+        double r = (bigX * 1.656492) - (bigY * 0.354851) - (bigZ * 0.255038);
+        double g = (-bigX * 0.707196) + (bigY * 1.655397) + (bigZ * 0.036152);
+        double b = (bigX * 0.051713) - (bigY * 0.121364) + (bigZ * 1.011530);
+
+        r = Math.Max(0, r);
+        g = Math.Max(0, g);
+        b = Math.Max(0, b);
+
+        // Normalize if any component exceeds 1.0
+        double max = Math.Max(r, Math.Max(g, b));
+        if (max > 1.0)
+        {
+            r /= max;
+            g /= max;
+            b /= max;
+        }
+
+        // Reverse gamma correction
+        r = r <= 0.0031308 ? 12.92 * r : ((1.0 + 0.055) * Math.Pow(r, 1.0 / 2.4)) - 0.055;
+        g = g <= 0.0031308 ? 12.92 * g : ((1.0 + 0.055) * Math.Pow(g, 1.0 / 2.4)) - 0.055;
+        b = b <= 0.0031308 ? 12.92 * b : ((1.0 + 0.055) * Math.Pow(b, 1.0 / 2.4)) - 0.055;
+
+        // Boost vibrancy for UI preview so colors aren't overly dim
+        double maxGamma = Math.Max(r, Math.Max(g, b));
+        if (maxGamma > 0.01 && maxGamma < 0.9)
+        {
+            double boost = 0.95 / maxGamma;
+            r = Math.Min(1.0, r * boost);
+            g = Math.Min(1.0, g * boost);
+            b = Math.Min(1.0, b * boost);
+        }
+
+        int ri = Math.Clamp((int)Math.Round(r * 255), 0, 255);
+        int gi = Math.Clamp((int)Math.Round(g * 255), 0, 255);
+        int bi = Math.Clamp((int)Math.Round(b * 255), 0, 255);
+
+        return $"#{ri:X2}{gi:X2}{bi:X2}";
+    }
+
+    /// <summary>
+    /// Converts a Hue color temperature in Mirek (153 - 500) to an approximate Hex color string.
+    /// </summary>
+    /// <param name="mirek">The Mirek value.</param>
+    /// <returns>A hex color string.</returns>
+    public static string MirekToHex(int mirek)
+    {
+        int clamped = Math.Clamp(mirek, 153, 500);
+        double kelvin = 1000000.0 / clamped;
+        double temp = kelvin / 100.0;
+
+        double r;
+        double g;
+        double b;
+
+        if (temp <= 66)
+        {
+            r = 255;
+            g = (99.4708025861 * Math.Log(temp)) - 161.1195681661;
+            b = temp <= 19 ? 0 : (138.5177312231 * Math.Log(temp - 10)) - 305.0447927307;
+        }
+        else
+        {
+            r = 329.698727446 * Math.Pow(temp - 60, -0.1332047592);
+            g = 288.1221695283 * Math.Pow(temp - 60, -0.0755148492);
+            b = 255;
+        }
+
+        int ri = Math.Clamp((int)Math.Round(r), 0, 255);
+        int gi = Math.Clamp((int)Math.Round(g), 0, 255);
+        int bi = Math.Clamp((int)Math.Round(b), 0, 255);
+
+        return $"#{ri:X2}{gi:X2}{bi:X2}";
+    }
 }

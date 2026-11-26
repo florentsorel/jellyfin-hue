@@ -1,9 +1,10 @@
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Hue.Api.Models;
 
 /// <summary>
-/// Simplified Hue scene item DTO for UI dropdowns.
+/// Simplified Hue scene item DTO for UI selection cards.
 /// </summary>
 public class HueSceneItemDto
 {
@@ -30,4 +31,10 @@ public class HueSceneItemDto
     /// </summary>
     [JsonPropertyName("groupName")]
     public string? GroupName { get; set; }
+
+    /// <summary>
+    /// Gets the extracted hex colors representing the scene palette for UI preview.
+    /// </summary>
+    [JsonPropertyName("paletteColors")]
+    public Collection<string> PaletteColors { get; } = new();
 }
