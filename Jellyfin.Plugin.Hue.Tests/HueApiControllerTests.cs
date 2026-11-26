@@ -103,6 +103,10 @@ public class HueApiControllerTests
             {
                 json = "{\"data\":[{\"id\":\"light-1\",\"metadata\":{\"name\":\"Hue Lamp\",\"archetype\":\"sultan_bulb\"},\"color\":{\"xy\":{\"x\":0.4,\"y\":0.4}},\"color_temperature\":{\"mirek\":300},\"dimming\":{\"brightness\":80}}]}";
             }
+            else if (path.EndsWith("/scene", StringComparison.Ordinal))
+            {
+                json = "{\"data\":[{\"id\":\"scene-1\",\"metadata\":{\"name\":\"Cinema\"},\"group\":{\"rid\":\"room-1\",\"rtype\":\"room\"},\"palette\":{\"color\":[{\"color\":{\"xy\":{\"x\":0.561,\"y\":0.4042}}}]}}]}";
+            }
             else
             {
                 json = "{\"data\":[]}";
@@ -127,6 +131,13 @@ public class HueApiControllerTests
         Assert.True(response.Lights[0].SupportsColor);
         Assert.True(response.Lights[0].SupportsColorTemperature);
         Assert.True(response.Lights[0].SupportsDimming);
+
+        Assert.Single(response.Scenes);
+        Assert.Equal("scene-1", response.Scenes[0].Id);
+        Assert.Equal("Cinema", response.Scenes[0].Name);
+        Assert.Equal("grouped-1", response.Scenes[0].GroupId);
+        Assert.Equal("Living Room", response.Scenes[0].GroupName);
+        Assert.NotEmpty(response.Scenes[0].PaletteColors);
     }
 
     [Fact]

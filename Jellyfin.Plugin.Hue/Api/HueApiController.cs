@@ -105,7 +105,7 @@ public class HueApiController : ControllerBase
     }
 
     /// <summary>
-    /// Gets all available rooms, zones, and lights from the configured bridge.
+    /// Gets all available rooms, zones, lights, and scenes from the configured bridge.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Available lighting resources.</returns>
@@ -117,7 +117,13 @@ public class HueApiController : ControllerBase
         var rooms = await _hueClient.GetRoomsAsync(cancellationToken).ConfigureAwait(false);
         var zones = await _hueClient.GetZonesAsync(cancellationToken).ConfigureAwait(false);
         var lights = await _hueClient.GetLightsAsync(cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation("Hue resources fetched: rooms={RoomCount}, zones={ZoneCount}, lights={LightCount}", rooms.Count, zones.Count, lights.Count);
+        var scenes = await _hueClient.GetScenesAsync(cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation(
+            "Hue resources fetched: rooms={RoomCount}, zones={ZoneCount}, lights={LightCount}, scenes={SceneCount}",
+            rooms.Count,
+            zones.Count,
+            lights.Count,
+            scenes.Count);
 
         var colorDeviceIds = lights
             .Where(l => l.Color != null && l.Owner?.Rid != null)
@@ -129,16 +135,22 @@ public class HueApiController : ControllerBase
             .Select(l => l.Owner!.Rid)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        var groupMap = new Dictionary<string, (string GroupedLightId, string Name)>(StringComparer.OrdinalIgnoreCase);
+
         var response = new HueResourcesResponse();
         foreach (var r in rooms.OrderBy(r => r.Metadata?.Name ?? string.Empty, StringComparer.CurrentCultureIgnoreCase))
         {
             var hasColor = r.Children.Count == 0 || r.Children.Any(c => colorDeviceIds.Contains(c.Rid));
             var hasCt = r.Children.Count == 0 || r.Children.Any(c => colorTemperatureDeviceIds.Contains(c.Rid));
+            var groupedLightId = r.Services.FirstOrDefault(s => s.Rtype == "grouped_light")?.Rid ?? r.Id;
+            var roomName = r.Metadata?.Name ?? "Room";
+
+            groupMap[r.Id] = (groupedLightId, roomName);
 
             response.Rooms.Add(new HueResourceItemDto
             {
-                Id = r.Services.FirstOrDefault(s => s.Rtype == "grouped_light")?.Rid ?? r.Id,
-                Name = r.Metadata?.Name ?? "Room",
+                Id = groupedLightId,
+                Name = roomName,
                 Archetype = r.Metadata?.Archetype,
                 SupportsColor = hasColor,
                 SupportsColorTemperature = hasCt,
@@ -150,11 +162,15 @@ public class HueApiController : ControllerBase
         {
             var hasColor = z.Children.Count == 0 || z.Children.Any(c => colorDeviceIds.Contains(c.Rid));
             var hasCt = z.Children.Count == 0 || z.Children.Any(c => colorTemperatureDeviceIds.Contains(c.Rid));
+            var groupedLightId = z.Services.FirstOrDefault(s => s.Rtype == "grouped_light")?.Rid ?? z.Id;
+            var zoneName = z.Metadata?.Name ?? "Zone";
+
+            groupMap[z.Id] = (groupedLightId, zoneName);
 
             response.Zones.Add(new HueResourceItemDto
             {
-                Id = z.Services.FirstOrDefault(s => s.Rtype == "grouped_light")?.Rid ?? z.Id,
-                Name = z.Metadata?.Name ?? "Zone",
+                Id = groupedLightId,
+                Name = zoneName,
                 Archetype = z.Metadata?.Archetype,
                 SupportsColor = hasColor,
                 SupportsColorTemperature = hasCt,
@@ -175,8 +191,87 @@ public class HueApiController : ControllerBase
             });
         }
 
+        var mappedScenes = scenes
+            .Select(s =>
+            {
+                string? groupedLightId = null;
+                string? groupName = null;
+                if (s.Group?.Rid != null && groupMap.TryGetValue(s.Group.Rid, out var grp))
+                {
+                    groupedLightId = grp.GroupedLightId;
+                    groupName = grp.Name;
+                }
+                else if (s.Group?.Rid != null)
+                {
+                    groupedLightId = s.Group.Rid;
+                }
+
+                var dto = new HueSceneItemDto
+                {
+                    Id = s.Id,
+                    Name = s.Metadata?.Name ?? "Scene",
+                    GroupId = groupedLightId,
+                    GroupName = groupName,
+                };
+
+                foreach (var hex in ExtractScenePaletteColors(s))
+                {
+                    dto.PaletteColors.Add(hex);
+                }
+
+                return dto;
+            })
+            .OrderBy(s => s.GroupName ?? string.Empty, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase);
+
+        foreach (var sceneDto in mappedScenes)
+        {
+            response.Scenes.Add(sceneDto);
+        }
+
         response.BridgeTimeZone = await _hueClient.GetBridgeTimeZoneAsync(cancellationToken).ConfigureAwait(false);
         return Ok(response);
+    }
+
+    private static List<string> ExtractScenePaletteColors(Jellyfin.Plugin.Hue.Hue.Models.HueSceneResource scene)
+    {
+        var colors = new List<string>();
+
+        if (scene.Palette != null)
+        {
+            colors.AddRange(scene.Palette.Color
+                .Where(c => c.Color?.Xy != null)
+                .Select(c => ColorUtils.XyToHex(c.Color!.Xy))
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+
+            if (colors.Count == 0)
+            {
+                colors.AddRange(scene.Palette.ColorTemperature
+                    .Where(ct => ct.ColorTemperature?.Mirek != null)
+                    .Select(ct => ColorUtils.MirekToHex(ct.ColorTemperature!.Mirek!.Value))
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
+            }
+        }
+
+        if (colors.Count == 0 && scene.Actions.Count > 0)
+        {
+            colors.AddRange(scene.Actions
+                .Select(act => act.Action?.Color?.Xy != null
+                    ? ColorUtils.XyToHex(act.Action.Color.Xy)
+                    : (act.Action?.ColorTemperature?.Mirek != null
+                        ? ColorUtils.MirekToHex(act.Action.ColorTemperature.Mirek.Value)
+                        : null))
+                .Where(hex => !string.IsNullOrEmpty(hex))
+                .Select(hex => hex!)
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+        }
+
+        if (colors.Count == 0)
+        {
+            colors.Add("#FFB366");
+        }
+
+        return colors.Take(5).ToList();
     }
 
     /// <summary>
