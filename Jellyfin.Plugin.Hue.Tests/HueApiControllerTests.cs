@@ -105,7 +105,7 @@ public class HueApiControllerTests
             }
             else if (path.EndsWith("/scene", StringComparison.Ordinal))
             {
-                json = "{\"data\":[{\"id\":\"scene-1\",\"metadata\":{\"name\":\"Cinema\"},\"group\":{\"rid\":\"room-1\",\"rtype\":\"room\"}}]}";
+                json = "{\"data\":[{\"id\":\"scene-1\",\"metadata\":{\"name\":\"Cinema\"},\"group\":{\"rid\":\"room-1\",\"rtype\":\"room\"},\"palette\":{\"color\":[{\"color\":{\"xy\":{\"x\":0.561,\"y\":0.4042}}}]}}]}";
             }
             else
             {
@@ -137,6 +137,7 @@ public class HueApiControllerTests
         Assert.Equal("Cinema", response.Scenes[0].Name);
         Assert.Equal("grouped-1", response.Scenes[0].GroupId);
         Assert.Equal("Living Room", response.Scenes[0].GroupName);
+        Assert.NotEmpty(response.Scenes[0].PaletteColors);
     }
 
     [Fact]

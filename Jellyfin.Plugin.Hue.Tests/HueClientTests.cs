@@ -158,6 +158,7 @@ public class HueClientTests
         {
             TargetGroupIds = new[] { "group-1" },
             PlaySceneId = "scene-cinema-123",
+            PlayBrightness = 35,
             PlayTransitionDurationMs = 3500,
             RestoreStateOnStop = false,
         };
@@ -168,6 +169,7 @@ public class HueClientTests
         Assert.Contains("scene/scene-cinema-123", handler.Requests[0].RequestUri?.ToString());
         Assert.Contains("\"action\":\"active\"", capturedBody);
         Assert.Contains("\"duration\":3500", capturedBody);
+        Assert.Contains("\"brightness\":35", capturedBody);
     }
 }
 

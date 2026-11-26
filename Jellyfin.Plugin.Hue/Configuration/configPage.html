@@ -364,6 +364,77 @@
                 color: #ffb74d;
                 font-size: 0.85em;
             }
+            .hue-scenes-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+                gap: 0.65em;
+                margin-top: 0.5em;
+                max-height: 280px;
+                overflow-y: auto;
+                padding: 0.25em;
+            }
+            .hue-scene-card {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                text-align: center;
+                padding: 0.75em 0.5em 0.65em 0.5em;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1.5px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+                user-select: none;
+                position: relative;
+            }
+            .hue-scene-card:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.28);
+                transform: translateY(-1px);
+            }
+            .hue-scene-card.selected {
+                background: rgba(0, 164, 220, 0.16);
+                border-color: #00a4dc;
+                box-shadow: 0 0 12px rgba(0, 164, 220, 0.28);
+            }
+            .hue-scene-orb {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                margin-bottom: 0.5em;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1.5px solid rgba(255, 255, 255, 0.18);
+            }
+            .hue-scene-card.selected .hue-scene-orb {
+                border-color: #ffffff;
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.5);
+            }
+            .hue-scene-title {
+                font-size: 0.84em;
+                font-weight: 600;
+                color: #f0f0f0;
+                line-height: 1.25;
+                max-width: 100%;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                word-break: break-word;
+            }
+            .hue-scene-room {
+                font-size: 0.72em;
+                color: #999;
+                margin-top: 0.2em;
+                max-width: 100%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         </style>
 
         <div class="content-primary">
@@ -569,10 +640,18 @@
 
                     <!-- Play Action -->
                     <div class="hue-section-title" data-i18n="sectionPlay">▶️ On Playback Start</div>
+                    <div class="inputContainer" style="margin-bottom: 0.75em;">
+                        <label class="inputLabel" data-i18n="lblScene">Hue Scene (optional)</label>
+                        <input type="hidden" id="selPlayScene" value="" />
+                        <div id="gridPlayScene" class="hue-scenes-grid"></div>
+                    </div>
                     <div class="hue-action-row">
-                        <div class="inputContainer" style="flex:1; min-width:220px; max-width:440px; margin:0 !important;">
-                            <label class="inputLabel" for="selPlayScene" data-i18n="lblScene">Hue Scene (optional)</label>
-                            <select is="emby-select" id="selPlayScene" class="emby-select-withcolor emby-select"></select>
+                        <div class="inputContainer hue-slider-container">
+                            <label class="inputLabel" for="numPlayBrightness" data-i18n="lblBrightnessOff">Brightness (0 = Off, 1-100%)</label>
+                            <div class="hue-slider-row">
+                                <input type="range" id="numPlayBrightness" min="0" max="100" value="0" class="hue-range" />
+                                <span id="valPlayBrightness" class="hue-slider-badge">0%</span>
+                            </div>
                         </div>
                         <div class="inputContainer hue-duration-container">
                             <label class="inputLabel" for="numPlayDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
@@ -580,15 +659,6 @@
                         </div>
                     </div>
                     <div id="playManualSettings">
-                        <div class="hue-action-row" style="margin-top: 0.75em;">
-                            <div class="inputContainer hue-slider-container">
-                                <label class="inputLabel" for="numPlayBrightness" data-i18n="lblBrightnessOff">Brightness (0 = Off, 1-100%)</label>
-                                <div class="hue-slider-row">
-                                    <input type="range" id="numPlayBrightness" min="0" max="100" value="0" class="hue-range" />
-                                    <span id="valPlayBrightness" class="hue-slider-badge">0%</span>
-                                </div>
-                            </div>
-                        </div>
                         <div class="inputContainer" id="rowPlayColor" style="margin-top: 1em;">
                             <label class="inputLabel" data-i18n="lblColorHex">Hue Color</label>
                             <div class="hue-color-picker-wrap">
@@ -606,10 +676,18 @@
 
                     <!-- Pause Action -->
                     <div class="hue-section-title" data-i18n="sectionPause">⏸️ On Pause</div>
+                    <div class="inputContainer" style="margin-bottom: 0.75em;">
+                        <label class="inputLabel" data-i18n="lblScene">Hue Scene (optional)</label>
+                        <input type="hidden" id="selPauseScene" value="" />
+                        <div id="gridPauseScene" class="hue-scenes-grid"></div>
+                    </div>
                     <div class="hue-action-row">
-                        <div class="inputContainer" style="flex:1; min-width:220px; max-width:440px; margin:0 !important;">
-                            <label class="inputLabel" for="selPauseScene" data-i18n="lblScene">Hue Scene (optional)</label>
-                            <select is="emby-select" id="selPauseScene" class="emby-select-withcolor emby-select"></select>
+                        <div class="inputContainer hue-slider-container">
+                            <label class="inputLabel" for="numPauseBrightness" data-i18n="lblBrightness">Brightness (1-100%)</label>
+                            <div class="hue-slider-row">
+                                <input type="range" id="numPauseBrightness" min="1" max="100" value="25" class="hue-range" />
+                                <span id="valPauseBrightness" class="hue-slider-badge">25%</span>
+                            </div>
                         </div>
                         <div class="inputContainer hue-duration-container">
                             <label class="inputLabel" for="numPauseDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
@@ -617,15 +695,6 @@
                         </div>
                     </div>
                     <div id="pauseManualSettings">
-                        <div class="hue-action-row" style="margin-top: 0.75em;">
-                            <div class="inputContainer hue-slider-container">
-                                <label class="inputLabel" for="numPauseBrightness" data-i18n="lblBrightness">Brightness (1-100%)</label>
-                                <div class="hue-slider-row">
-                                    <input type="range" id="numPauseBrightness" min="1" max="100" value="25" class="hue-range" />
-                                    <span id="valPauseBrightness" class="hue-slider-badge">25%</span>
-                                </div>
-                            </div>
-                        </div>
                         <div class="inputContainer" id="rowPauseColor" style="margin-top: 1em;">
                             <label class="inputLabel" data-i18n="lblColorHex">Hue Color</label>
                             <div class="hue-color-picker-wrap">
@@ -650,27 +719,25 @@
                         </label>
                     </div>
                     <div id="resumeSettingsContainer">
+                        <div class="inputContainer" style="margin-bottom: 0.75em;">
+                            <label class="inputLabel" data-i18n="lblScene">Hue Scene (optional)</label>
+                            <input type="hidden" id="selResumeScene" value="" />
+                            <div id="gridResumeScene" class="hue-scenes-grid"></div>
+                        </div>
                         <div class="hue-action-row">
-                            <div class="inputContainer" style="flex:1; min-width:220px; max-width:440px; margin:0 !important;">
-                                <label class="inputLabel" for="selResumeScene" data-i18n="lblScene">Hue Scene (optional)</label>
-                                <select is="emby-select" id="selResumeScene" class="emby-select-withcolor emby-select"></select>
+                            <div class="inputContainer hue-slider-container">
+                                <label class="inputLabel" for="numResumeBrightness" data-i18n="lblBrightnessOff">Brightness (0 = Off, 1-100%)</label>
+                                <div class="hue-slider-row">
+                                    <input type="range" id="numResumeBrightness" min="0" max="100" value="0" class="hue-range" />
+                                    <span id="valResumeBrightness" class="hue-slider-badge">0%</span>
+                                </div>
                             </div>
                             <div class="inputContainer hue-duration-container">
                                 <label class="inputLabel" for="numResumeDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
                                 <input is="emby-input" type="number" id="numResumeDuration" min="0" max="60000" step="500" />
                             </div>
                         </div>
-                        <div id="resumeManualSettings">
-                            <div class="hue-action-row" style="margin-top: 0.75em;">
-                                <div class="inputContainer hue-slider-container">
-                                    <label class="inputLabel" for="numResumeBrightness" data-i18n="lblBrightnessOff">Brightness (0 = Off, 1-100%)</label>
-                                    <div class="hue-slider-row">
-                                        <input type="range" id="numResumeBrightness" min="0" max="100" value="0" class="hue-range" />
-                                        <span id="valResumeBrightness" class="hue-slider-badge">0%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <div id="resumeManualSettings"></div>
                     </div>
 
                     <!-- Stop Action -->
@@ -683,10 +750,18 @@
                     </div>
 
                     <div id="stopSettingsContainer">
+                        <div class="inputContainer" style="margin-bottom: 0.75em;">
+                            <label class="inputLabel" data-i18n="lblScene">Hue Scene (optional)</label>
+                            <input type="hidden" id="selStopScene" value="" />
+                            <div id="gridStopScene" class="hue-scenes-grid"></div>
+                        </div>
                         <div class="hue-action-row">
-                            <div class="inputContainer" style="flex:1; min-width:220px; max-width:440px; margin:0 !important;">
-                                <label class="inputLabel" for="selStopScene" data-i18n="lblScene">Hue Scene (optional)</label>
-                                <select is="emby-select" id="selStopScene" class="emby-select-withcolor emby-select"></select>
+                            <div class="inputContainer hue-slider-container">
+                                <label class="inputLabel" for="numStopBrightness" data-i18n="lblBrightness">Brightness (1-100%)</label>
+                                <div class="hue-slider-row">
+                                    <input type="range" id="numStopBrightness" min="1" max="100" value="80" class="hue-range" />
+                                    <span id="valStopBrightness" class="hue-slider-badge">80%</span>
+                                </div>
                             </div>
                             <div class="inputContainer hue-duration-container">
                                 <label class="inputLabel" for="numStopDuration" data-i18n="lblFadeDuration">Fade Duration (ms)</label>
@@ -694,15 +769,6 @@
                             </div>
                         </div>
                         <div id="stopManualSettings">
-                            <div class="hue-action-row" style="margin-top: 0.75em;">
-                                <div class="inputContainer hue-slider-container">
-                                    <label class="inputLabel" for="numStopBrightness" data-i18n="lblBrightness">Brightness (1-100%)</label>
-                                    <div class="hue-slider-row">
-                                        <input type="range" id="numStopBrightness" min="1" max="100" value="80" class="hue-range" />
-                                        <span id="valStopBrightness" class="hue-slider-badge">80%</span>
-                                    </div>
-                                </div>
-                            </div>
                             <div class="inputContainer" id="rowStopColor" style="margin-top: 1em;">
                                 <label class="inputLabel" data-i18n="lblColorHex">Hue Color</label>
                                 <div class="hue-color-picker-wrap">
@@ -794,8 +860,9 @@
                         lblBrightness: "Luminosité (1-100%)",
                         lblFadeDuration: "Durée de transition (ms)",
                         lblColorHex: "Couleur Hue",
-                        lblScene: "Scène Hue (optionnel)",
-                        sceneNoneManual: "— Couleur & Luminosité personnalisées —",
+                        lblScene: "Mode d'éclairage / Scène Hue",
+                        sceneNoneManual: "Couleur personnalisée",
+                        sceneDefaultBri: "Scène",
                         warnTargetsNoColor: "Les cibles sélectionnées ne prennent pas en charge la couleur (uniquement variation d'intensité).",
                         lightOff: "Éteint",
                         roomType: "Pièce",
@@ -914,8 +981,9 @@
                         lblBrightness: "Brightness (1-100%)",
                         lblFadeDuration: "Fade Duration (ms)",
                         lblColorHex: "Hue Color",
-                        lblScene: "Hue Scene (optional)",
-                        sceneNoneManual: "— Custom Color & Brightness —",
+                        lblScene: "Lighting Mode / Hue Scene",
+                        sceneNoneManual: "Custom Color",
+                        sceneDefaultBri: "Scene",
                         warnTargetsNoColor: "Selected targets do not support color (brightness dimming only).",
                         lightOff: "Off",
                         roomType: "Room",
@@ -1496,14 +1564,19 @@
                     return '<svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:middle;">' + content + '</svg>';
                 }
 
-                function setupBrightnessSlider(rangeId, badgeId, isOffAllowed) {
+                function setupBrightnessSlider(rangeId, badgeId, isOffAllowed, sceneInputId) {
                     var range = document.getElementById(rangeId);
                     var badge = document.getElementById(badgeId);
                     if (!range || !badge) return;
 
                     function update() {
                         var val = parseInt(range.value, 10) || 0;
-                        if (val === 0 && isOffAllowed) {
+                        var sceneEl = sceneInputId ? document.getElementById(sceneInputId) : null;
+                        var hasScene = sceneEl && Boolean(sceneEl.value);
+                        if (val === 0 && hasScene) {
+                            badge.textContent = "Auto (" + t("sceneDefaultBri") + ")";
+                            badge.style.color = "#81c784";
+                        } else if (val === 0 && isOffAllowed) {
                             badge.textContent = "0% (" + t("lightOff") + ")";
                             badge.style.color = "#aaa";
                         } else {
@@ -1512,6 +1585,7 @@
                         }
                     }
                     range.oninput = update;
+                    range._updateBadge = update;
                     update();
                 }
 
@@ -1622,6 +1696,16 @@
                     setColor(txt.value || "#FFB366");
                 }
 
+                function buildSceneOrbBackground(colors) {
+                    if (!colors || colors.length === 0) {
+                        return "linear-gradient(135deg, #FFB366, #FF7043)";
+                    }
+                    if (colors.length === 1) {
+                        return colors[0];
+                    }
+                    return "linear-gradient(135deg, " + colors.join(", ") + ")";
+                }
+
                 function populateSceneSelectors(p) {
                     var selectedGroupIds = [];
                     document.querySelectorAll("#hueTargetGroupsList input[type='checkbox']:checked").forEach(function (cb) {
@@ -1636,24 +1720,49 @@
                     });
 
                     var configs = [
-                        { selectId: "selPlayScene", manualId: "playManualSettings", initialVal: p ? p.PlaySceneId : null },
-                        { selectId: "selPauseScene", manualId: "pauseManualSettings", initialVal: p ? p.PauseSceneId : null },
-                        { selectId: "selResumeScene", manualId: "resumeManualSettings", initialVal: p ? p.ResumeSceneId : null },
-                        { selectId: "selStopScene", manualId: "stopManualSettings", initialVal: p ? p.StopSceneId : null }
+                        { selectId: "selPlayScene", gridId: "gridPlayScene", manualId: "playManualSettings", rangeId: "numPlayBrightness", initialVal: p ? p.PlaySceneId : null },
+                        { selectId: "selPauseScene", gridId: "gridPauseScene", manualId: "pauseManualSettings", rangeId: "numPauseBrightness", initialVal: p ? p.PauseSceneId : null },
+                        { selectId: "selResumeScene", gridId: "gridResumeScene", manualId: "resumeManualSettings", rangeId: "numResumeBrightness", initialVal: p ? p.ResumeSceneId : null },
+                        { selectId: "selStopScene", gridId: "gridStopScene", manualId: "stopManualSettings", rangeId: "numStopBrightness", initialVal: p ? p.StopSceneId : null }
                     ];
 
                     configs.forEach(function (cfg) {
-                        var sel = document.getElementById(cfg.selectId);
+                        var hiddenInput = document.getElementById(cfg.selectId);
+                        var grid = document.getElementById(cfg.gridId);
                         var manualBox = document.getElementById(cfg.manualId);
-                        if (!sel) return;
+                        var rangeEl = document.getElementById(cfg.rangeId);
+                        if (!hiddenInput || !grid) return;
 
-                        var currentVal = (cfg.initialVal !== undefined && cfg.initialVal !== null) ? cfg.initialVal : (sel.value || "");
-                        sel.innerHTML = "";
+                        var currentVal = (cfg.initialVal !== undefined && cfg.initialVal !== null) ? cfg.initialVal : (hiddenInput.value || "");
+                        hiddenInput.value = currentVal || "";
+                        grid.innerHTML = "";
 
-                        var noneOpt = document.createElement("option");
-                        noneOpt.value = "";
-                        noneOpt.textContent = t("sceneNoneManual");
-                        sel.appendChild(noneOpt);
+                        function selectSceneValue(val) {
+                            hiddenInput.value = val || "";
+                            grid.querySelectorAll(".hue-scene-card").forEach(function (cardEl) {
+                                cardEl.classList.toggle("selected", cardEl.getAttribute("data-scene-id") === (val || ""));
+                            });
+                            if (manualBox) {
+                                manualBox.style.display = val ? "none" : "block";
+                            }
+                            if (rangeEl && typeof rangeEl._updateBadge === "function") {
+                                rangeEl._updateBadge();
+                            }
+                        }
+
+                        // 1. Custom color card
+                        var customCard = document.createElement("div");
+                        customCard.className = "hue-scene-card" + (!currentVal ? " selected" : "");
+                        customCard.setAttribute("data-scene-id", "");
+                        customCard.innerHTML =
+                            '<div class="hue-scene-orb" style="background: conic-gradient(#ff5722, #ffeb3b, #4caf50, #00bcd4, #3f51b5, #e91e63, #ff5722);">' +
+                                '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>' +
+                            '</div>' +
+                            '<div class="hue-scene-title">' + escapeHtml(t("sceneNoneManual")) + '</div>';
+                        customCard.addEventListener("click", function () {
+                            selectSceneValue("");
+                        });
+                        grid.appendChild(customCard);
 
                         var scenesToInclude = filteredScenes.slice();
                         if (currentVal && !scenesToInclude.some(function (s) { return (s.id || s.Id) === currentVal; })) {
@@ -1664,26 +1773,27 @@
                         scenesToInclude.forEach(function (s) {
                             var sid = s.id || s.Id;
                             var sName = s.name || s.Name || "Scene";
-                            var gName = s.groupName || s.GroupName;
-                            var opt = document.createElement("option");
-                            opt.value = sid;
-                            opt.textContent = gName ? (gName + " — " + sName) : sName;
-                            sel.appendChild(opt);
+                            var gName = s.groupName || s.GroupName || "";
+                            var palette = s.paletteColors || s.PaletteColors || [];
+                            var bgStyle = buildSceneOrbBackground(palette);
+
+                            var card = document.createElement("div");
+                            card.className = "hue-scene-card" + (currentVal === sid ? " selected" : "");
+                            card.setAttribute("data-scene-id", sid);
+                            card.title = gName ? (gName + " — " + sName) : sName;
+                            card.innerHTML =
+                                '<div class="hue-scene-orb" style="background: ' + bgStyle + ';"></div>' +
+                                '<div class="hue-scene-title">' + escapeHtml(sName) + '</div>' +
+                                (gName ? '<div class="hue-scene-room">' + escapeHtml(gName) + '</div>' : '');
+
+                            card.addEventListener("click", function () {
+                                selectSceneValue(sid);
+                            });
+
+                            grid.appendChild(card);
                         });
 
-                        sel.value = currentVal || "";
-                        if (sel.value !== (currentVal || "")) {
-                            sel.value = "";
-                        }
-
-                        function updateManualVisibility() {
-                            if (manualBox) {
-                                manualBox.style.display = sel.value ? "none" : "block";
-                            }
-                        }
-
-                        sel.onchange = updateManualVisibility;
-                        updateManualVisibility();
+                        selectSceneValue(currentVal);
                     });
                 }
 
@@ -2197,14 +2307,14 @@
                     document.getElementById("numPlayBrightness").value = p.PlayBrightness ?? 0;
                     document.getElementById("txtPlayColor").value = p.PlayColorHex || "#FFB366";
                     document.getElementById("numPlayDuration").value = p.PlayTransitionDurationMs ?? 4000;
-                    setupBrightnessSlider("numPlayBrightness", "valPlayBrightness", true);
+                    setupBrightnessSlider("numPlayBrightness", "valPlayBrightness", true, "selPlayScene");
                     setupColorPicker("txtPlayColor", "pickerPlayColor", "boxPlayColor", "swatchesPlay");
                     setupDurationInput("numPlayDuration", 4000);
 
                     document.getElementById("numPauseBrightness").value = p.PauseBrightness ?? 25;
                     document.getElementById("txtPauseColor").value = p.PauseColorHex || "#FFB366";
                     document.getElementById("numPauseDuration").value = p.PauseTransitionDurationMs ?? 1000;
-                    setupBrightnessSlider("numPauseBrightness", "valPauseBrightness", false);
+                    setupBrightnessSlider("numPauseBrightness", "valPauseBrightness", false, "selPauseScene");
                     setupColorPicker("txtPauseColor", "pickerPauseColor", "boxPauseColor", "swatchesPause");
                     setupDurationInput("numPauseDuration", 1000);
 
@@ -2220,7 +2330,7 @@
 
                     document.getElementById("numResumeBrightness").value = p.ResumeBrightness ?? 0;
                     document.getElementById("numResumeDuration").value = p.ResumeTransitionDurationMs ?? 3000;
-                    setupBrightnessSlider("numResumeBrightness", "valResumeBrightness", true);
+                    setupBrightnessSlider("numResumeBrightness", "valResumeBrightness", true, "selResumeScene");
                     setupDurationInput("numResumeDuration", 3000);
 
                     // Stop Action
@@ -2236,9 +2346,11 @@
                     document.getElementById("numStopBrightness").value = p.StopBrightness ?? 80;
                     document.getElementById("txtStopColor").value = p.StopColorHex || "#FFFFFF";
                     document.getElementById("numStopDuration").value = p.StopTransitionDurationMs ?? 2000;
-                    setupBrightnessSlider("numStopBrightness", "valStopBrightness", false);
+                    setupBrightnessSlider("numStopBrightness", "valStopBrightness", false, "selStopScene");
                     setupColorPicker("txtStopColor", "pickerStopColor", "boxStopColor", "swatchesStop");
                     setupDurationInput("numStopDuration", 2000);
+
+                    populateSceneSelectors(p);
 
                     // Switch view: Hide profiles list and show inline editor
                     document.getElementById("profilesMainView").style.display = "none";
