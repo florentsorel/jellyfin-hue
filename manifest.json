@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/florentsorel/jellyfin-hue/master/Jellyfin.Plugin.Hue/hue_cover.jpg",
     "versions": [
       {
+        "version": "12.0.5.0",
+        "changelog": "- feat: add support for selecting a Hue scene per playback state\n- chore: bump version to 12.1.0.0\n- chore: bump version to 12.0.5.0",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/florentsorel/jellyfin-hue/releases/download/v12.0.5.0/jellyfin-plugin-hue_12.0.5.0.zip",
+        "checksum": "bb32e3daf96bfce8a6747bd5ea569817",
+        "timestamp": "2026-11-27T00:09:56.523Z"
+      },
+      {
         "version": "10.11.2.0",
         "changelog": "- feat(v10): add support for selecting a Hue scene per playback state\n- chore(v10): bump version to 10.11.2.0",
         "targetAbi": "10.11.0.0",
